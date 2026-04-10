@@ -3,7 +3,7 @@
   "about": "Merge, deduplicate, and combine CSV files",
   "commands": {
     "outer": {
-      "about": "Full outer join — all rows from all files, merged on keys",
+      "about": "Full outer join — all rows from all files, deduped on keys",
       "usage": "csv-dedup outer <file1.csv> [file2.csv ...] [options]",
       "options": [
         { "flag": "-k, --keys <cols>", "about": "Comma-separated key column(s) for matching rows (required)" },
@@ -31,7 +31,7 @@
       ]
     },
     "left": {
-      "about": "Left join — source rows enriched with data from other files",
+      "about": "Left join — source rows only, optionally enriched from other files",
       "usage": "csv-dedup left <source.csv> <other.csv> [other2.csv ...] [options]",
       "options": [
         { "flag": "-k, --keys <cols>", "about": "Comma-separated key column(s) for matching rows (required)" },
@@ -58,20 +58,6 @@
         "csv-dedup exclude main.csv dupes1.csv dupes2.csv -k domain,name"
       ]
     },
-    "dedup": {
-      "about": "Deduplicate rows within a CSV, keeping first occurrence per key",
-      "usage": "csv-dedup dedup <file.csv> [options]",
-      "options": [
-        { "flag": "-k, --keys <cols>", "about": "Comma-separated key column(s) for matching rows (required)" },
-        { "flag": "-c, --columns <cols>", "about": "Comma-separated columns to include in output (default: all)" },
-        { "flag": "-o, --output <path>", "about": "Output file path (default: <first-file>.out.csv)" },
-        { "flag": "-h, --help", "about": "Show this help" }
-      ],
-      "examples": [
-        "csv-dedup dedup messy.csv -k email",
-        "csv-dedup dedup contacts.csv -k first,last -o clean.csv"
-      ]
-    },
     "unique": {
       "about": "Keep only rows whose keys appear in exactly one file",
       "usage": "csv-dedup unique <file1.csv> <file2.csv> [file3.csv ...] [options]",
@@ -86,9 +72,9 @@
         "csv-dedup unique list1.csv list2.csv list3.csv -k id -o only-in-one.csv"
       ]
     },
-    "dupes": {
+    "overlap": {
       "about": "Keep only rows whose keys appear in more than one file",
-      "usage": "csv-dedup dupes <file1.csv> <file2.csv> [file3.csv ...] [options]",
+      "usage": "csv-dedup overlap <file1.csv> <file2.csv> [file3.csv ...] [options]",
       "options": [
         { "flag": "-k, --keys <cols>", "about": "Comma-separated key column(s) for matching rows (required)" },
         { "flag": "-c, --columns <cols>", "about": "Comma-separated columns to include in output (default: all)" },
@@ -96,8 +82,8 @@
         { "flag": "-h, --help", "about": "Show this help" }
       ],
       "examples": [
-        "csv-dedup dupes a.csv b.csv -k email",
-        "csv-dedup dupes list1.csv list2.csv -k domain,name -o overlaps.csv"
+        "csv-dedup overlap a.csv b.csv -k email",
+        "csv-dedup overlap list1.csv list2.csv -k domain,name -o overlaps.csv"
       ]
     }
   }

@@ -1,7 +1,6 @@
 import type { Strategy } from "../join";
 
 export const outer: Strategy = {
-  name: "Outer join",
-  merge: true,
+  name: "Outer",
   filter: (order) => order,
 };

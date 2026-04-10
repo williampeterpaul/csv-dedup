@@ -4,7 +4,6 @@ import { read, write } from "./csv";
 
 export interface Strategy {
   name: string;
-  merge: boolean;
   filter(order: string[], hits: Map<string, Set<number>>, count: number): string[];
 }
 
@@ -37,8 +36,7 @@ export async function run(args: JoinArgs, strategy: Strategy) {
     for (const row of rows) {
       const key = args.keys.map((k) => row[idx[k]!] ?? "").join("\0");
 
-      const isNew = !map.has(key);
-      if (isNew) {
+      if (!map.has(key)) {
         map.set(key, Object.fromEntries(cols.map((c) => [c, ""])));
         hits.set(key, new Set());
         order.push(key);
@@ -46,12 +44,10 @@ export async function run(args: JoinArgs, strategy: Strategy) {
 
       hits.get(key)!.add(fi);
 
-      if (strategy.merge || isNew) {
-        const rec = map.get(key)!;
-        for (const c of cols) {
-          const ci = idx[c];
-          if (ci !== undefined && row[ci] && !rec[c]) rec[c] = row[ci]!;
-        }
+      const rec = map.get(key)!;
+      for (const c of cols) {
+        const ci = idx[c];
+        if (ci !== undefined && row[ci] && !rec[c]) rec[c] = row[ci]!;
       }
     }
   }

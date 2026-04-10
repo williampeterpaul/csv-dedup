@@ -3,11 +3,10 @@ import { outer } from "./outer";
 import { inner } from "./inner";
 import { left } from "./left";
 import { exclude } from "./exclude";
-import { dedup } from "./dedup";
 import { unique } from "./unique";
-import { dupes } from "./dupes";
+import { overlap } from "./overlap";
 
 export const strategies: Record<string, Strategy> = {
-  outer, inner, left, exclude, dedup, unique, dupes,
+  outer, inner, left, exclude, unique, overlap,
 };
 export type { Strategy };
