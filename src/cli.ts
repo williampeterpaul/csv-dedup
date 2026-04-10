@@ -1,6 +1,7 @@
 import { parseArgs } from "node:util";
 import { resolve, basename, extname, dirname, join } from "node:path";
 import help from "./help.json";
+import { strategies } from "./strategies";
 
 export interface JoinArgs {
   files: string[];
@@ -9,12 +10,15 @@ export interface JoinArgs {
   dest: string;
 }
 
-type Command = { cmd: "outer" | "inner"; args: JoinArgs };
+export interface Command {
+  cmd: string;
+  args: JoinArgs;
+}
 
 function usage(cmd?: string) {
   if (!cmd) {
     const cmds = Object.entries(help.commands)
-      .map(([name, c]) => `  ${name.padEnd(8)} ${c.about}`)
+      .map(([name, c]) => `  ${name.padEnd(10)} ${c.about}`)
       .join("\n");
     console.log(`\n${help.name} — ${help.about}\n\nUsage:\n  ${help.name} <command> [options]\n\nCommands:\n${cmds}\n\nRun ${help.name} <command> --help for command-specific options.\n`);
     return;
@@ -37,10 +41,9 @@ export async function parse(): Promise<Command> {
     process.exit(0);
   }
 
-  if (cmd === "outer") return { cmd: "outer", args: await parseJoin(cmd, argv.slice(1)) };
-  if (cmd === "inner") return { cmd: "inner", args: await parseJoin(cmd, argv.slice(1)) };
+  if (!(cmd in strategies)) fail(`Unknown command: ${cmd}`);
 
-  fail(`Unknown command: ${cmd}`);
+  return { cmd, args: await parseJoin(cmd, argv.slice(1)) };
 }
 
 async function parseJoin(cmd: string, argv: string[]): Promise<JoinArgs> {
