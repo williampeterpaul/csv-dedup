@@ -31,7 +31,7 @@
       ]
     },
     "left": {
-      "about": "Left join — source rows only, optionally enriched from other files",
+      "about": "Left join — source rows enriched with data from other files",
       "usage": "csv-dedup left <source.csv> <other.csv> [other2.csv ...] [options]",
       "options": [
         { "flag": "-k, --keys <cols>", "about": "Comma-separated key column(s) for matching rows (required)" },
