@@ -26,6 +26,9 @@ bun run src/index.ts filter leads.csv -e "country=US AND email!=''"
 # Format / normalize values
 bun run src/index.ts format leads.csv -c name --title
 
+# Split a column into two
+bun run src/index.ts cleave contacts.csv -c email --on "@" --as user,domain
+
 # Split into chunks
 bun run src/index.ts split leads.csv -n 1000
 ```
@@ -137,6 +140,22 @@ csv-dedup format <file.csv> [-c cols] [options] [-o output.csv]
 | `--truncate <n>` | Cap values at N characters |
 | `--strip <chars>` | Remove specific characters |
 
+### cleave
+
+Split one column into two on a delimiter. Splits on the first occurrence; if the delimiter isn't found, the full value goes left and right stays empty.
+
+```bash
+csv-dedup cleave <file.csv> -c <column> --on <delim> [--as left,right] [-o output.csv]
+```
+
+| Flag | Short | Description |
+| --- | --- | --- |
+| `--column <col>` | `-c` | Column to split (required) |
+| `--on <chars>` | `-d` | Delimiter to split on (required) |
+| `--as <l,r>` | | Names for the two new columns (default: `col_1`, `col_2`) |
+| `--last` | | Split on last occurrence instead of first |
+| `--keep` | | Keep the original column alongside the new ones |
+
 ### split
 
 Split a CSV into fixed-size chunks, each with headers.
@@ -151,4 +170,4 @@ csv-dedup split <file.csv> -n <rows>
 bun test
 ```
 
-55 tests across unit tests (expression compiler, CSV helpers, strategies) and integration tests (every command exercised via subprocess).
+60 tests across unit tests (expression compiler, CSV helpers, strategies) and integration tests (every command exercised via subprocess).

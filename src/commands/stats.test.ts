@@ -27,4 +27,17 @@ describe("stats", () => {
     expect(stdout).toContain("100.0%");
     expect(stdout).toContain("66.7%");
   });
+
+  test("--expr filters rows before computing stats", async () => {
+    const t = await tmp();
+    cleanup = t.cleanup;
+    const file = await t.file("data.csv", csv);
+
+    const { stdout, code } = await run("stats", file, "-e", "country=US");
+
+    expect(code).toBe(0);
+    expect(stdout).toContain("2 rows");
+    expect(stdout).toContain("Filtered: 2 of 3 rows");
+    expect(stdout).toContain("100.0%");
+  });
 });

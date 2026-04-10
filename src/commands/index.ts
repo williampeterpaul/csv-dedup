@@ -4,7 +4,8 @@ import { stats } from "./stats";
 import { filter } from "./filter";
 import { split } from "./split";
 import { format } from "./format";
+import { cleave } from "./cleave";
 
 export const commands: Record<string, Cmd> = {
-  merge, stats, filter, split, format,
+  merge, stats, filter, split, format, cleave,
 };

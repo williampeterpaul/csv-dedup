@@ -22,12 +22,15 @@
     },
     "stats": {
       "about": "Print column fill rates, unique counts, and top values",
-      "usage": "csv-dedup stats <file.csv>",
+      "usage": "csv-dedup stats <file.csv> [options]",
       "options": [
+        { "flag": "-e, --expr <expr>", "about": "Filter expression (repeatable, ANDed) — stats for matching rows only" },
         { "flag": "-h, --help", "about": "Show this help" }
       ],
       "examples": [
-        "csv-dedup stats leads.csv"
+        "csv-dedup stats leads.csv",
+        "csv-dedup stats leads.csv -e \"country=US\"",
+        "csv-dedup stats leads.csv -e \"email!=''\" -e \"country:US,UK\""
       ]
     },
     "filter": {
@@ -76,6 +79,24 @@
         "csv-dedup format leads.csv -c name --title --truncate 50",
         "csv-dedup format leads.csv -c website --domain -o clean.csv",
         "csv-dedup format leads.csv -c notes --strip \"#$\" -o clean.csv"
+      ]
+    },
+    "cleave": {
+      "about": "Split one column into two on a delimiter",
+      "usage": "csv-dedup cleave <file.csv> -c <column> --on <delim> [options]",
+      "options": [
+        { "flag": "-c, --column <col>", "about": "Column to split (required)" },
+        { "flag": "-d, --on <chars>", "about": "Delimiter to split on (required)" },
+        { "flag": "--as <left,right>", "about": "Names for the two new columns (default: col_1, col_2)" },
+        { "flag": "--last", "about": "Split on last occurrence instead of first" },
+        { "flag": "--keep", "about": "Keep the original column alongside the new ones" },
+        { "flag": "-o, --output <path>", "about": "Output file path (default: <file>.out.csv)" },
+        { "flag": "-h, --help", "about": "Show this help" }
+      ],
+      "examples": [
+        "csv-dedup cleave contacts.csv -c full_name --on \" \" --as first,last",
+        "csv-dedup cleave leads.csv -c email --on \"@\" --as user,domain",
+        "csv-dedup cleave data.csv -c url --on \"://\" --keep -o split.csv"
       ]
     }
   }
