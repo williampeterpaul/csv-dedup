@@ -33,16 +33,10 @@ export const pick: Cmd = {
 
     if (opts.columns) {
       const names = opts.columns.split(",").map((s) => s.trim());
-      idxs = names.map((n) => {
-        const i = headers.indexOf(n);
-        if (i === -1) fail(`Column "${n}" not found`);
-        return i;
-      });
+      idxs = names.map((n) => headers.indexOf(n)).filter((i) => i !== -1);
+      if (idxs.length === 0) fail("None of the specified columns exist");
     } else {
       const dropSet = new Set(opts.drop!.split(",").map((s) => s.trim()));
-      for (const d of dropSet) {
-        if (!headers.includes(d)) fail(`Column "${d}" not found`);
-      }
       idxs = headers.map((_, i) => i).filter((i) => !dropSet.has(headers[i]!));
     }
 
