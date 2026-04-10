@@ -129,11 +129,20 @@ csv-dedup stats <file.csv> [-e <expression>] [--group <col>]
 
 ### filter
 
-Filter rows by expression. Expressions are ANDed together.
+Filter rows by expression, reference file, or both.
 
 ```bash
-csv-dedup filter <file.csv> -e <expression> [-e <expression> ...] [-o output.csv]
+csv-dedup filter <file.csv> -e <expression> [-o output.csv]
+csv-dedup filter <file.csv> --in <ref.csv> -c <cols> [-o output.csv]
 ```
+
+| Flag | Short | Description |
+| --- | --- | --- |
+| `--expr <expr>` | `-e` | Filter expression (repeatable, ANDed) |
+| `--in <file>` | | Reference CSV — keep rows whose key columns appear in this file |
+| `--columns <cols>` | `-c` | Columns to match on (required with `--in`) |
+| `--invert` | `-v` | Invert the filter — keep non-matching rows |
+| `--output <path>` | `-o` | Output file path (default: `<file>.out.csv`) |
 
 #### Expression syntax
 

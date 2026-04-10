@@ -9,8 +9,9 @@ export async function read(path: string): Promise<Sheet> {
     skipEmptyLines: true,
   });
 
-  if (parsed.errors.length > 0) {
-    console.error("CSV parse errors:", parsed.errors);
+  const errs = parsed.errors.filter((e) => e.code !== "UndetectableDelimiter");
+  if (errs.length > 0) {
+    console.error("CSV parse errors:", errs);
     process.exit(1);
   }
 

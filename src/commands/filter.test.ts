@@ -83,4 +83,60 @@ describe("filter", () => {
     expect(sheet.rows.length).toBe(3);
     expect(sheet.rows.every((r) => r[1] === "US" || r[1] === "FR")).toBe(true);
   });
+
+  test("--in keeps rows matching reference file", async () => {
+    const t = await tmp();
+    cleanup = t.cleanup;
+    const file = await t.file("data.csv", csv);
+    const ref = await t.file("allow.csv", "email\nacme@test.com\ndelta@test.com\n");
+    const out = join(t.dir, "out.csv");
+
+    const { code } = await run("filter", file, "--in", ref, "-c", "email", "-o", out);
+
+    expect(code).toBe(0);
+    const sheet = await read(out);
+    expect(sheet.rows.length).toBe(2);
+    expect(sheet.rows.map((r) => r[0])).toEqual(["Acme", "Delta"]);
+  });
+
+  test("--in --invert excludes rows matching reference file", async () => {
+    const t = await tmp();
+    cleanup = t.cleanup;
+    const file = await t.file("data.csv", csv);
+    const ref = await t.file("block.csv", "email\nacme@test.com\ndelta@test.com\n");
+    const out = join(t.dir, "out.csv");
+
+    const { code } = await run("filter", file, "--in", ref, "-c", "email", "--invert", "-o", out);
+
+    expect(code).toBe(0);
+    const sheet = await read(out);
+    expect(sheet.rows.length).toBe(2);
+    expect(sheet.rows.map((r) => r[0])).toEqual(["Beta", "Gamma"]);
+  });
+
+  test("--invert with --expr inverts expression filter", async () => {
+    const t = await tmp();
+    cleanup = t.cleanup;
+    const file = await t.file("data.csv", csv);
+    const out = join(t.dir, "out.csv");
+
+    const { code } = await run("filter", file, "-e", "country=US", "--invert", "-o", out);
+
+    expect(code).toBe(0);
+    const sheet = await read(out);
+    expect(sheet.rows.length).toBe(2);
+    expect(sheet.rows.every((r) => r[1] !== "US")).toBe(true);
+  });
+
+  test("errors when --in given without -c", async () => {
+    const t = await tmp();
+    cleanup = t.cleanup;
+    const file = await t.file("data.csv", csv);
+    const ref = await t.file("ref.csv", "email\nfoo@bar.com\n");
+
+    const { code, stderr } = await run("filter", file, "--in", ref);
+
+    expect(code).not.toBe(0);
+    expect(stderr).toContain("--columns");
+  });
 });
