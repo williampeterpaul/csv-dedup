@@ -5,7 +5,10 @@ import { filter } from "./filter";
 import { split } from "./split";
 import { format } from "./format";
 import { cleave } from "./cleave";
+import { pick } from "./pick";
+import { append } from "./append";
+import { join } from "./join";
 
 export const commands: Record<string, Cmd> = {
-  merge, stats, filter, split, format, cleave,
+  merge, stats, filter, split, format, cleave, pick, append, join,
 };

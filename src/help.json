@@ -49,14 +49,16 @@
     },
     "split": {
       "about": "Split a CSV into fixed-size chunks",
-      "usage": "csv-dedup split <file.csv> -n <rows>",
+      "usage": "csv-dedup split <file.csv> -n <rows> [options]",
       "options": [
         { "flag": "-n, --rows <n>", "about": "Max rows per output file (required)" },
+        { "flag": "--take <n>", "about": "Only write the first N chunks (--take 1 = head)" },
         { "flag": "-h, --help", "about": "Show this help" }
       ],
       "examples": [
         "csv-dedup split leads.csv -n 1000",
-        "csv-dedup split contacts.csv -n 500"
+        "csv-dedup split contacts.csv -n 500",
+        "csv-dedup split leads.csv -n 100 --take 1"
       ]
     },
     "format": {
@@ -97,6 +99,49 @@
         "csv-dedup cleave contacts.csv -c full_name --on \" \" --as first,last",
         "csv-dedup cleave leads.csv -c email --on \"@\" --as user,domain",
         "csv-dedup cleave data.csv -c url --on \"://\" --keep -o split.csv"
+      ]
+    },
+    "pick": {
+      "about": "Select, reorder, or drop columns",
+      "usage": "csv-dedup pick <file.csv> (-c <cols> | --drop <cols>) [options]",
+      "options": [
+        { "flag": "-c, --columns <cols>", "about": "Comma-separated columns to keep, in order" },
+        { "flag": "--drop <cols>", "about": "Comma-separated columns to remove" },
+        { "flag": "-o, --output <path>", "about": "Output file path (default: <file>.out.csv)" },
+        { "flag": "-h, --help", "about": "Show this help" }
+      ],
+      "examples": [
+        "csv-dedup pick leads.csv -c name,email,domain",
+        "csv-dedup pick leads.csv --drop notes,internal_id -o clean.csv"
+      ]
+    },
+    "append": {
+      "about": "Add or overwrite a column with a literal value",
+      "usage": "csv-dedup append <file.csv> --set <col=val> [options]",
+      "options": [
+        { "flag": "--set <col=val>", "about": "Column name and value (repeatable)" },
+        { "flag": "-o, --output <path>", "about": "Output file path (default: <file>.out.csv)" },
+        { "flag": "-h, --help", "about": "Show this help" }
+      ],
+      "examples": [
+        "csv-dedup append leads.csv --set source=linkedin",
+        "csv-dedup append leads.csv --set batch=2024-Q1 --set status=new -o tagged.csv"
+      ]
+    },
+    "join": {
+      "about": "Concatenate columns into a new column (inverse of cleave)",
+      "usage": "csv-dedup join <file.csv> --from <cols> --as <name> [options]",
+      "options": [
+        { "flag": "--from <cols>", "about": "Comma-separated source columns (required)" },
+        { "flag": "--glue <str>", "about": "Separator between values (default: empty)" },
+        { "flag": "--as <name>", "about": "Name for the new column (required)" },
+        { "flag": "--drop", "about": "Remove source columns after joining" },
+        { "flag": "-o, --output <path>", "about": "Output file path (default: <file>.out.csv)" },
+        { "flag": "-h, --help", "about": "Show this help" }
+      ],
+      "examples": [
+        "csv-dedup join contacts.csv --from first,last --glue \" \" --as full_name",
+        "csv-dedup join data.csv --from city,state,zip --glue \", \" --as address --drop"
       ]
     }
   }

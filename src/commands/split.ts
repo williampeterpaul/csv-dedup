@@ -13,6 +13,7 @@ export const split: Cmd = {
       allowPositionals: true,
       options: {
         rows: { type: "string", short: "n" },
+        take: { type: "string" },
         help: { type: "boolean", short: "h" },
       },
     });
@@ -33,18 +34,23 @@ export const split: Cmd = {
     const base = basename(file, ext);
     const dir = dirname(file);
     const chunks = Math.ceil(rows.length / n);
+    const take = opts.take ? parseInt(opts.take, 10) : chunks;
+    if (isNaN(take) || take < 1) fail("--take must be a positive integer");
+    const limit = Math.min(take, chunks);
     const pad = String(chunks).length;
 
     const files: string[] = [];
-    for (let i = 0; i < chunks; i++) {
+    for (let i = 0; i < limit; i++) {
       const chunk = rows.slice(i * n, (i + 1) * n);
       const name = join(dir, `${base}_${String(i + 1).padStart(pad, "0")}${ext}`);
       await write(name, headers, chunk);
       files.push(name);
     }
 
+    const written = files.reduce((s, _f, i) => s + rows.slice(i * n, (i + 1) * n).length, 0);
     log(
-      `Split ${rows.length} rows into ${chunks} file(s) of up to ${n} rows`,
+      `Split ${written} of ${rows.length} rows into ${limit} file(s) of up to ${n} rows`,
+      limit < chunks && `Took first ${limit} of ${chunks} chunks`,
       ...files,
     );
   },

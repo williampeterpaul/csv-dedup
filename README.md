@@ -26,10 +26,19 @@ bun run src/index.ts filter leads.csv -e "country=US AND email!=''"
 # Format / normalize values
 bun run src/index.ts format leads.csv -c name --title
 
+# Select specific columns
+bun run src/index.ts pick leads.csv -c name,email,domain
+
+# Tag rows with a literal value
+bun run src/index.ts append leads.csv --set source=linkedin
+
+# Concatenate columns
+bun run src/index.ts join contacts.csv --from first,last --glue " " --as full_name
+
 # Split a column into two
 bun run src/index.ts cleave contacts.csv -c email --on "@" --as user,domain
 
-# Split into chunks
+# Split into chunks (--take 1 for head)
 bun run src/index.ts split leads.csv -n 1000
 ```
 
@@ -156,13 +165,59 @@ csv-dedup cleave <file.csv> -c <column> --on <delim> [--as left,right] [-o outpu
 | `--last` | | Split on last occurrence instead of first |
 | `--keep` | | Keep the original column alongside the new ones |
 
+### pick
+
+Select, reorder, or drop columns.
+
+```bash
+csv-dedup pick <file.csv> -c <cols> [-o output.csv]
+csv-dedup pick <file.csv> --drop <cols> [-o output.csv]
+```
+
+| Flag | Short | Description |
+| --- | --- | --- |
+| `--columns <cols>` | `-c` | Columns to keep, in order |
+| `--drop <cols>` | | Columns to remove |
+
+### append
+
+Add or overwrite a column with a literal value.
+
+```bash
+csv-dedup append <file.csv> --set <col=val> [-o output.csv]
+```
+
+| Flag | Description |
+| --- | --- |
+| `--set <col=val>` | Column name and value (repeatable) |
+
+### join
+
+Concatenate columns into a new column (inverse of cleave).
+
+```bash
+csv-dedup join <file.csv> --from <cols> --as <name> [--glue <str>] [-o output.csv]
+```
+
+| Flag | Description |
+| --- | --- |
+| `--from <cols>` | Source columns (required) |
+| `--glue <str>` | Separator (default: empty) |
+| `--as <name>` | New column name (required) |
+| `--drop` | Remove source columns after joining |
+
 ### split
 
 Split a CSV into fixed-size chunks, each with headers.
 
 ```bash
-csv-dedup split <file.csv> -n <rows>
+csv-dedup split <file.csv> -n <rows> [--take <n>]
 ```
+
+| Flag | Short | Description |
+| --- | --- | --- |
+| `--rows <n>` | `-n` | Max rows per chunk (required) |
+| `--take <n>` | | Only write the first N chunks (`--take 1` = head) |
 
 ## Testing
 
@@ -170,4 +225,4 @@ csv-dedup split <file.csv> -n <rows>
 bun test
 ```
 
-60 tests across unit tests (expression compiler, CSV helpers, strategies) and integration tests (every command exercised via subprocess).
+71 tests across unit tests (expression compiler, CSV helpers, strategies) and integration tests (every command exercised via subprocess).
