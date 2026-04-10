@@ -1,11 +1,7 @@
-import type { JoinArgs } from "./cli";
-import { fail } from "./cli";
-import { read, write } from "./csv";
-
-export interface Strategy {
-  name: string;
-  filter(order: string[], hits: Map<string, Set<number>>, count: number): string[];
-}
+import type { JoinArgs, Strategy } from "../../types";
+import { fail } from "../../cli";
+import { log } from "../../util";
+import { read, write } from "../../csv";
 
 export async function run(args: JoinArgs, strategy: Strategy) {
   const sheets = await Promise.all(args.files.map(read));
@@ -58,8 +54,10 @@ export async function run(args: JoinArgs, strategy: Strategy) {
   await write(args.dest, cols, rows);
 
   const dropped = order.length - kept.length;
-  console.log(`${strategy.name} ${kept.length} rows from ${sheets.length} file(s)${dropped ? ` (${dropped} dropped)` : ""}`);
-  console.log(`  Columns: ${cols.join(", ")}`);
-  console.log(`  Keys:    ${args.keys.join(", ")}`);
-  console.log(`  Output:  ${args.dest}`);
+  log(
+    `${strategy.name} ${kept.length} rows from ${sheets.length} file(s)${dropped ? ` (${dropped} dropped)` : ""}`,
+    `Columns: ${cols.join(", ")}`,
+    `Keys:    ${args.keys.join(", ")}`,
+    `Output:  ${args.dest}`,
+  );
 }

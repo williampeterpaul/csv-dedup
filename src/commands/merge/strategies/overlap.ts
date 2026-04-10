@@ -1,4 +1,4 @@
-import type { Strategy } from "../join";
+import type { Strategy } from "../../../types";
 
 export const overlap: Strategy = {
   name: "Overlap",

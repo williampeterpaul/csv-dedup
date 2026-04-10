@@ -1,9 +1,6 @@
 import Papa from "papaparse";
-
-export interface Sheet {
-  headers: string[];
-  rows: string[][];
-}
+import type { Sheet } from "./types";
+import { fail } from "./cli";
 
 export async function read(path: string): Promise<Sheet> {
   const raw = await Bun.file(path).text();
@@ -29,4 +26,14 @@ export async function read(path: string): Promise<Sheet> {
 export async function write(path: string, headers: string[], rows: string[][]) {
   const csv = Papa.unparse({ fields: headers, data: rows });
   await Bun.write(path, csv);
+}
+
+export function cols(raw: string | undefined, headers: string[]): { names: string[]; idxs: number[] } {
+  const names = raw ? raw.split(",").map((s) => s.trim()).filter(Boolean) : headers;
+  const idxs = names.map((n) => {
+    const i = headers.indexOf(n);
+    if (i === -1) fail(`Column "${n}" not found`);
+    return i;
+  });
+  return { names, idxs };
 }

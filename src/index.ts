@@ -1,7 +1,6 @@
 #!/usr/bin/env bun
 import { parse } from "./cli";
-import { run } from "./join";
-import { strategies } from "./strategies";
+import { commands } from "./commands";
 
-const { cmd, args } = await parse();
-await run(args, strategies[cmd]!);
+const { cmd, argv } = parse();
+await commands[cmd]!.run(argv);

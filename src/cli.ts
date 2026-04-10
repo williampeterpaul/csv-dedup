@@ -1,21 +1,6 @@
-import { parseArgs } from "node:util";
-import { resolve, basename, extname, dirname, join } from "node:path";
 import help from "./help.json";
-import { strategies } from "./strategies";
 
-export interface JoinArgs {
-  files: string[];
-  keys: string[];
-  cols: string[] | null;
-  dest: string;
-}
-
-export interface Command {
-  cmd: string;
-  args: JoinArgs;
-}
-
-function usage(cmd?: string) {
+export function usage(cmd?: string) {
   if (!cmd) {
     const cmds = Object.entries(help.commands)
       .map(([name, c]) => `  ${name.padEnd(10)} ${c.about}`)
@@ -32,7 +17,7 @@ function usage(cmd?: string) {
   console.log(`\n${help.name} ${cmd} — ${c.about}\n\nUsage:\n  ${c.usage}\n\nOptions:\n${opts}\n\nExamples:\n${exs}\n`);
 }
 
-export async function parse(): Promise<Command> {
+export function parse(): { cmd: string; argv: string[] } {
   const argv = Bun.argv.slice(2);
   const cmd = argv[0];
 
@@ -41,54 +26,9 @@ export async function parse(): Promise<Command> {
     process.exit(0);
   }
 
-  if (!(cmd in strategies)) fail(`Unknown command: ${cmd}`);
+  if (!(cmd in help.commands)) fail(`Unknown command: ${cmd}`);
 
-  return { cmd, args: await parseJoin(cmd, argv.slice(1)) };
-}
-
-async function parseJoin(cmd: string, argv: string[]): Promise<JoinArgs> {
-  const { values: opts, positionals: pos } = parseArgs({
-    args: argv,
-    allowPositionals: true,
-    options: {
-      keys: { type: "string", short: "k" },
-      columns: { type: "string", short: "c" },
-      output: { type: "string", short: "o" },
-      help: { type: "boolean", short: "h" },
-    },
-  });
-
-  if (opts.help || pos.length === 0) {
-    usage(cmd);
-    process.exit(0);
-  }
-
-  if (!opts.keys) fail("--keys is required");
-
-  const files: string[] = [];
-  for (const p of pos) {
-    const abs = resolve(p);
-    if (!(await Bun.file(abs).exists())) fail(`File not found: ${abs}`);
-    files.push(abs);
-  }
-
-  const keys = opts.keys!.split(",").map((s) => s.trim()).filter(Boolean);
-  if (keys.length === 0) fail("--keys must specify at least one column");
-
-  const cols = opts.columns
-    ? opts.columns.split(",").map((s) => s.trim()).filter(Boolean)
-    : null;
-
-  let dest: string;
-  if (opts.output) {
-    dest = resolve(opts.output);
-  } else {
-    const first = files[0]!;
-    const ext = extname(first);
-    dest = join(dirname(first), `${basename(first, ext)}.out${ext}`);
-  }
-
-  return { files, keys, cols, dest };
+  return { cmd, argv: argv.slice(1) };
 }
 
 export function fail(msg: string): never {
