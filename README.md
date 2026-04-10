@@ -42,6 +42,17 @@ bun run src/index.ts cleave contacts.csv -c email --on "@" --as user,domain
 bun run src/index.ts split leads.csv -n 1000
 ```
 
+## Global options
+
+| Flag | Description |
+| --- | --- |
+| `--dry-run` | Show what would happen without writing any files |
+
+```bash
+# Preview a merge without writing output
+csv-dedup merge a.csv b.csv -k domain,name --dry-run
+```
+
 ## Commands
 
 ### merge
@@ -236,4 +247,4 @@ csv-dedup split <file.csv> -n <rows> [--take <n>]
 bun test
 ```
 
-81 tests across unit tests (expression compiler, CSV helpers, strategies) and integration tests (every command exercised via subprocess).
+82 tests across unit tests (expression compiler, CSV helpers, strategies) and integration tests (every command exercised via subprocess).

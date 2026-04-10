@@ -1,6 +1,6 @@
 import { parseArgs } from "node:util";
 import { resolve, basename, extname, dirname, join } from "node:path";
-import { usage, fail } from "./cli";
+import { usage, fail, dry } from "./cli";
 
 export function dest(file: string, output?: string): string {
   if (output) return resolve(output);
@@ -27,7 +27,7 @@ export async function one(argv: string[], cmd: string): Promise<string> {
 }
 
 export function log(title: string, ...lines: (string | false | null | undefined | 0)[]) {
-  console.log(title);
+  console.log(dry ? `[dry-run] ${title}` : title);
   for (const line of lines)
     if (line) console.log(`  ${line}`);
 }

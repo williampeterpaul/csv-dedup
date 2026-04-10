@@ -1,6 +1,6 @@
 import Papa from "papaparse";
 import type { Sheet } from "./types";
-import { fail } from "./cli";
+import { fail, dry } from "./cli";
 
 export async function read(path: string): Promise<Sheet> {
   const raw = await Bun.file(path).text();
@@ -24,6 +24,7 @@ export async function read(path: string): Promise<Sheet> {
 }
 
 export async function write(path: string, headers: string[], rows: string[][]) {
+  if (dry) return;
   const csv = Papa.unparse({ fields: headers, data: rows });
   await Bun.write(path, csv);
 }

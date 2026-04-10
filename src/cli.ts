@@ -1,11 +1,13 @@
 import help from "./help.json";
 
+export let dry = false;
+
 export function usage(cmd?: string) {
   if (!cmd) {
     const cmds = Object.entries(help.commands)
       .map(([name, c]) => `  ${name.padEnd(10)} ${c.about}`)
       .join("\n");
-    console.log(`\n${help.name} — ${help.about}\n\nUsage:\n  ${help.name} <command> [options]\n\nCommands:\n${cmds}\n\nRun ${help.name} <command> --help for command-specific options.\n`);
+    console.log(`\n${help.name} — ${help.about}\n\nUsage:\n  ${help.name} <command> [options]\n\nGlobal options:\n  --dry-run              Show what would happen without writing files\n\nCommands:\n${cmds}\n\nRun ${help.name} <command> --help for command-specific options.\n`);
     return;
   }
 
@@ -28,7 +30,11 @@ export function parse(): { cmd: string; argv: string[] } {
 
   if (!(cmd in help.commands)) fail(`Unknown command: ${cmd}`);
 
-  return { cmd, argv: argv.slice(1) };
+  const rest = argv.slice(1);
+  const di = rest.indexOf("--dry-run");
+  if (di !== -1) { dry = true; rest.splice(di, 1); }
+
+  return { cmd, argv: rest };
 }
 
 export function fail(msg: string): never {

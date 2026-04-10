@@ -1,5 +1,6 @@
 import { test, expect, describe, afterAll } from "bun:test";
 import { join } from "node:path";
+import { existsSync } from "node:fs";
 import { tmp, run } from "../../test/fixture";
 import { read } from "../csv";
 
@@ -39,6 +40,19 @@ describe("pick", () => {
     const sheet = await read(out);
     expect(sheet.headers).toEqual(["name", "email"]);
     expect(sheet.rows[0]).toEqual(["Acme", "acme@test.com"]);
+  });
+
+  test("--dry-run skips file write", async () => {
+    const t = await tmp();
+    cleanup = t.cleanup;
+    const file = await t.file("data.csv", csv);
+    const out = join(t.dir, "dry.csv");
+
+    const { stdout, code } = await run("pick", file, "-c", "email,name", "-o", out, "--dry-run");
+
+    expect(code).toBe(0);
+    expect(stdout).toContain("[dry-run]");
+    expect(existsSync(out)).toBe(false);
   });
 
   test("errors when both -c and --drop given", async () => {
