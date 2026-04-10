@@ -1,0 +1,34 @@
+{
+  "name": "csv-dedup",
+  "about": "Merge, deduplicate, and combine CSV files",
+  "commands": {
+    "outer": {
+      "about": "Full outer join — all rows from all files, merged on keys",
+      "usage": "csv-dedup outer <file1.csv> [file2.csv ...] [options]",
+      "options": [
+        { "flag": "-k, --keys <cols>", "about": "Comma-separated key column(s) for matching rows (required)" },
+        { "flag": "-c, --columns <cols>", "about": "Comma-separated columns to include in output (default: all)" },
+        { "flag": "-o, --output <path>", "about": "Output file path (default: <first-file>.out.csv)" },
+        { "flag": "-h, --help", "about": "Show this help" }
+      ],
+      "examples": [
+        "csv-dedup outer a.csv b.csv -k domain,name",
+        "csv-dedup outer a.csv b.csv -k id -c id,name,email -o merged.csv"
+      ]
+    },
+    "inner": {
+      "about": "Inner join — only rows whose keys appear in all input files",
+      "usage": "csv-dedup inner <file1.csv> [file2.csv ...] [options]",
+      "options": [
+        { "flag": "-k, --keys <cols>", "about": "Comma-separated key column(s) for matching rows (required)" },
+        { "flag": "-c, --columns <cols>", "about": "Comma-separated columns to include in output (default: all)" },
+        { "flag": "-o, --output <path>", "about": "Output file path (default: <first-file>.out.csv)" },
+        { "flag": "-h, --help", "about": "Show this help" }
+      ],
+      "examples": [
+        "csv-dedup inner a.csv b.csv -k domain,name",
+        "csv-dedup inner a.csv b.csv c.csv -k id -o common.csv"
+      ]
+    }
+  }
+}

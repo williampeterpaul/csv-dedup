@@ -1,0 +1,22 @@
+{
+  "name": "csv-dedup",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "csv-dedup": "src/index.ts"
+  },
+  "scripts": {
+    "start": "bun run src/index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/papaparse": "^5.5.2"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "papaparse": "^5.5.3"
+  }
+}
