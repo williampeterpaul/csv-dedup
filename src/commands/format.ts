@@ -17,6 +17,8 @@ export const format: Cmd = {
         title: { type: "boolean", default: false },
         truncate: { type: "string", short: "t" },
         strip: { type: "string" },
+        ascii: { type: "boolean", default: false },
+        domain: { type: "boolean", default: false },
         output: { type: "string", short: "o" },
         help: { type: "boolean", short: "h" },
       },
@@ -40,11 +42,14 @@ export const format: Cmd = {
     for (const row of rows) {
       for (const i of idxs) {
         const orig = row[i] ?? "";
-        let val = orig;
+        let val = orig.trim().replace(/\s+/g, " ");
 
         if (opts.upper) val = val.toUpperCase();
         else if (opts.lower) val = val.toLowerCase();
         else if (opts.title) val = val.replace(/\b\w/g, (ch) => ch.toUpperCase());
+
+        if (opts.ascii) val = val.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^\x20-\x7E]/g, "");
+        if (opts.domain) val = val.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, "");
         if (stripSet) val = [...val].filter((ch) => !stripSet.has(ch)).join("");
         if (maxLen && val.length > maxLen) val = val.slice(0, maxLen);
 
@@ -62,6 +67,8 @@ export const format: Cmd = {
       opts.upper && "upper",
       opts.lower && "lower",
       opts.title && "title",
+      opts.ascii && "ascii",
+      opts.domain && "domain",
       maxLen && `truncate(${maxLen})`,
       stripSet && `strip(${opts.strip})`,
     ].filter(Boolean);

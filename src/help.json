@@ -1,6 +1,6 @@
 {
   "name": "csv-dedup",
-  "about": "Merge, deduplicate, and combine CSV files",
+  "about": "Merge, deduplicate, and transform CSV files",
   "commands": {
     "merge": {
       "about": "Join multiple CSVs on key columns (outer, inner, left, exclude, unique, overlap)",
@@ -56,36 +56,25 @@
         "csv-dedup split contacts.csv -n 500"
       ]
     },
-    "norm": {
-      "about": "Normalize column values (trim, lowercase, domain cleanup)",
-      "usage": "csv-dedup norm <file.csv> [options]",
-      "options": [
-        { "flag": "-c, --columns <cols>", "about": "Comma-separated columns to normalize (default: all)" },
-        { "flag": "--ascii", "about": "Transliterate accents to ASCII and strip non-printable characters" },
-        { "flag": "--domain", "about": "Strip http(s)://, www., and trailing slashes" },
-        { "flag": "-o, --output <path>", "about": "Output file path (default: <file>.out.csv)" },
-        { "flag": "-h, --help", "about": "Show this help" }
-      ],
-      "examples": [
-        "csv-dedup norm leads.csv -c email,domain",
-        "csv-dedup norm leads.csv -c website --domain -o clean.csv"
-      ]
-    },
     "format": {
-      "about": "Transform column values (casing, truncate, strip)",
+      "about": "Format and normalize column values (trim, collapse spaces, casing, etc.)",
       "usage": "csv-dedup format <file.csv> [options]",
       "options": [
         { "flag": "-c, --columns <cols>", "about": "Comma-separated columns to format (default: all)" },
         { "flag": "--upper", "about": "UPPERCASE" },
         { "flag": "--lower", "about": "lowercase" },
         { "flag": "--title", "about": "Title Case" },
+        { "flag": "--ascii", "about": "Transliterate accents to ASCII and strip non-printable characters" },
+        { "flag": "--domain", "about": "Strip http(s)://, www., and trailing slashes" },
         { "flag": "-t, --truncate <n>", "about": "Cap values at N characters" },
         { "flag": "--strip <chars>", "about": "Remove specific characters (e.g. \"#$\")" },
         { "flag": "-o, --output <path>", "about": "Output file path (default: <file>.out.csv)" },
         { "flag": "-h, --help", "about": "Show this help" }
       ],
       "examples": [
-        "csv-dedup format leads.csv -c name --truncate 50",
+        "csv-dedup format leads.csv -c email,domain",
+        "csv-dedup format leads.csv -c name --title --truncate 50",
+        "csv-dedup format leads.csv -c website --domain -o clean.csv",
         "csv-dedup format leads.csv -c notes --strip \"#$\" -o clean.csv"
       ]
     }

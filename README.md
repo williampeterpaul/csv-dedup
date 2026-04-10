@@ -1,6 +1,6 @@
 # csv-dedup
 
-Merge, deduplicate, and combine CSV files from the command line.
+Merge, deduplicate, and transform CSV files from the command line.
 
 ## Install
 
@@ -8,15 +8,57 @@ Merge, deduplicate, and combine CSV files from the command line.
 bun install
 ```
 
+## Quick start
+
+```bash
+# Merge two CSVs on shared keys (outer join, first-wins)
+bun run src/index.ts merge a.csv b.csv -k domain,name
+
+# Inner join — only rows present in both files
+bun run src/index.ts merge a.csv b.csv -k domain,name -m inner
+
+# Inspect a CSV
+bun run src/index.ts stats leads.csv
+
+# Filter rows
+bun run src/index.ts filter leads.csv -e "country=US AND email!=''"
+
+# Format / normalize values
+bun run src/index.ts format leads.csv -c name --title
+
+# Split into chunks
+bun run src/index.ts split leads.csv -n 1000
+```
+
 ## Commands
 
 ### merge
 
-Merge multiple CSVs into one, joining rows on identifying key columns. Uses a full outer join with first-wins conflict resolution — the first file's values are preserved, and later files only fill in blanks.
+Join multiple CSVs on key columns with first-wins conflict resolution — the first file's values are preserved, later files fill in blanks.
 
 ```bash
-bun run src/index.ts merge a.csv b.csv -k domain,name
+csv-dedup merge <file1.csv> [file2.csv ...] -k <keys> [options]
 ```
+
+| Flag | Short | Default | Description |
+| --- | --- | --- | --- |
+| `--keys <cols>` | `-k` | — | Key column(s) for matching rows (required) |
+| `--mode <mode>` | `-m` | `outer` | Join mode (see below) |
+| `--columns <cols>` | `-c` | all | Columns to include in output |
+| `--output <path>` | `-o` | `<first>.out.csv` | Output file path |
+
+#### Modes
+
+| Mode | Keeps |
+| --- | --- |
+| `outer` | All rows from all files (default) |
+| `inner` | Only rows whose keys appear in every file |
+| `left` | Only rows from the first file, enriched with data from others |
+| `exclude` | Only first-file rows whose keys don't appear in any other file |
+| `unique` | Only rows whose keys appear in exactly one file |
+| `overlap` | Only rows whose keys appear in more than one file |
+
+#### Example
 
 Given `a.csv`:
 
@@ -34,10 +76,8 @@ example.com,Acme,Outdated desc,US
 newco.io,Gamma,A new company,UK
 ```
 
-Running:
-
 ```bash
-bun run src/index.ts merge a.csv b.csv -k domain,name
+csv-dedup merge a.csv b.csv -k domain,name
 ```
 
 Produces `a.out.csv`:
@@ -49,23 +89,66 @@ test.org,Beta,A testing org,
 newco.io,Gamma,A new company,UK
 ```
 
-Note that `Acme`'s description is preserved from `a.csv` (first-wins), while `country` is filled in from `b.csv`.
+Acme's description is preserved from `a.csv` (first-wins), while `country` is filled in from `b.csv`.
 
-#### Options
+### stats
 
-| Flag | Short | Default | Description |
-| ------------------- | ----- | -------------------- | ---------------------------------------------------------- |
-| `--keys <cols>` | `-k` | — | Comma-separated key column(s) for matching rows (required) |
-| `--columns <cols>` | `-c` | all | Comma-separated columns to include in output |
-| `--output <path>` | `-o` | `<first-file>.out.csv` | Output file path |
-| `--help` | `-h` | | Show help |
-
-#### Column selection
-
-By default, the output includes the union of all columns from all input files. Use `--columns` to restrict:
+Print column fill rates, unique counts, and top values.
 
 ```bash
-bun run src/index.ts merge a.csv b.csv -k domain,name -c domain,name,country
+csv-dedup stats <file.csv>
 ```
 
-Key columns are always included in the output even if not listed in `--columns`.
+### filter
+
+Filter rows by expression. Expressions are ANDed together.
+
+```bash
+csv-dedup filter <file.csv> -e <expression> [-e <expression> ...] [-o output.csv]
+```
+
+#### Expression syntax
+
+| Syntax | Meaning |
+| --- | --- |
+| `col=val` | Exact match |
+| `col!=val` | Not equal |
+| `col=''` | Empty |
+| `col!=''` | Non-empty |
+| `col~sub` | Contains (case-insensitive) |
+| `col:a,b,c` | In set |
+| `expr AND expr` | Conjunction |
+
+### format
+
+Format and normalize column values. Always trims whitespace and collapses multiple spaces.
+
+```bash
+csv-dedup format <file.csv> [-c cols] [options] [-o output.csv]
+```
+
+| Flag | Description |
+| --- | --- |
+| `--upper` | UPPERCASE |
+| `--lower` | lowercase |
+| `--title` | Title Case |
+| `--ascii` | Transliterate accents to ASCII, strip non-printable chars |
+| `--domain` | Strip `http(s)://`, `www.`, and trailing slashes |
+| `--truncate <n>` | Cap values at N characters |
+| `--strip <chars>` | Remove specific characters |
+
+### split
+
+Split a CSV into fixed-size chunks, each with headers.
+
+```bash
+csv-dedup split <file.csv> -n <rows>
+```
+
+## Testing
+
+```bash
+bun test
+```
+
+55 tests across unit tests (expression compiler, CSV helpers, strategies) and integration tests (every command exercised via subprocess).
