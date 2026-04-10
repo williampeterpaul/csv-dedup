@@ -105,11 +105,16 @@ Acme's description is preserved from `a.csv` (first-wins), while `country` is fi
 
 ### stats
 
-Print column fill rates, unique counts, and top values.
+Print column fill rates, unique counts, and top values. Supports filtering and grouping.
 
 ```bash
-csv-dedup stats <file.csv>
+csv-dedup stats <file.csv> [-e <expression>] [--group <col>]
 ```
+
+| Flag | Short | Description |
+| --- | --- | --- |
+| `--expr <expr>` | `-e` | Filter rows before computing stats (repeatable, ANDed) |
+| `--group <col>` | `-g` | Group by column and show stats per group |
 
 ### filter
 
@@ -129,7 +134,13 @@ csv-dedup filter <file.csv> -e <expression> [-e <expression> ...] [-o output.csv
 | `col!=''` | Non-empty |
 | `col~sub` | Contains (case-insensitive) |
 | `col:a,b,c` | In set |
+| `col>n` | Greater than (numeric) |
+| `col>=n` | Greater than or equal |
+| `col<n` | Less than |
+| `col<=n` | Less than or equal |
 | `expr AND expr` | Conjunction |
+| `expr OR expr` | Disjunction |
+| `(a AND b) OR (c AND d)` | Grouped branches |
 
 ### format
 
@@ -225,4 +236,4 @@ csv-dedup split <file.csv> -n <rows> [--take <n>]
 bun test
 ```
 
-71 tests across unit tests (expression compiler, CSV helpers, strategies) and integration tests (every command exercised via subprocess).
+81 tests across unit tests (expression compiler, CSV helpers, strategies) and integration tests (every command exercised via subprocess).
