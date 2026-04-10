@@ -40,4 +40,31 @@ describe("stats", () => {
     expect(stdout).toContain("Filtered: 2 of 3 rows");
     expect(stdout).toContain("100.0%");
   });
+
+  test("--group shows stats per group", async () => {
+    const t = await tmp();
+    cleanup = t.cleanup;
+    const file = await t.file("data.csv", csv);
+
+    const { stdout, code } = await run("stats", file, "--group", "country");
+
+    expect(code).toBe(0);
+    expect(stdout).toContain("2 groups");
+    expect(stdout).toContain("US (2 rows)");
+    expect(stdout).toContain("UK (1 rows)");
+  });
+
+  test("--expr and --group combine", async () => {
+    const t = await tmp();
+    cleanup = t.cleanup;
+    const file = await t.file("data.csv", csv);
+
+    const { stdout, code } = await run("stats", file, "-e", "email!=''", "--group", "country");
+
+    expect(code).toBe(0);
+    expect(stdout).toContain("Filtered: 2 of 3 rows");
+    expect(stdout).toContain("1 groups");
+    expect(stdout).toContain("US (2 rows)");
+    expect(stdout).not.toContain("UK");
+  });
 });

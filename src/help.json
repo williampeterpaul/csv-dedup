@@ -25,12 +25,14 @@
       "usage": "csv-dedup stats <file.csv> [options]",
       "options": [
         { "flag": "-e, --expr <expr>", "about": "Filter expression (repeatable, ANDed) — stats for matching rows only" },
+        { "flag": "-g, --group <col>", "about": "Group by column and show stats per group" },
         { "flag": "-h, --help", "about": "Show this help" }
       ],
       "examples": [
         "csv-dedup stats leads.csv",
         "csv-dedup stats leads.csv -e \"country=US\"",
-        "csv-dedup stats leads.csv -e \"email!=''\" -e \"country:US,UK\""
+        "csv-dedup stats leads.csv --group country",
+        "csv-dedup stats leads.csv -e \"email!=''\" --group source"
       ]
     },
     "filter": {
