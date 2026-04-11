@@ -168,6 +168,19 @@
         "csv-dedup sort leads.csv -c score -n -d",
         "csv-dedup sort leads.csv -o sorted.csv"
       ]
+    },
+    "repeat": {
+      "about": "Duplicate every row N times",
+      "usage": "csv-dedup repeat <file.csv> [-n <times>] [options]",
+      "options": [
+        { "flag": "-n, --times <n>", "about": "Number of copies (default: 2)" },
+        { "flag": "-o, --output <path>", "about": "Output file path (default: <file>.out.csv)" },
+        { "flag": "-h, --help", "about": "Show this help" }
+      ],
+      "examples": [
+        "csv-dedup repeat leads.csv",
+        "csv-dedup repeat leads.csv -n 3 -o tripled.csv"
+      ]
     }
   }
 }

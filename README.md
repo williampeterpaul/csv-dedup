@@ -38,6 +38,12 @@ bun run src/index.ts join contacts.csv --from first,last --glue " " --as full_na
 # Split a column into two
 bun run src/index.ts cleave contacts.csv -c email --on "@" --as user,domain
 
+# Sort rows by column (auto-detects numeric vs alphabetical)
+bun run src/index.ts sort leads.csv -c domain
+
+# Duplicate every row
+bun run src/index.ts repeat leads.csv -n 2
+
 # Split into chunks (--take 1 for head)
 bun run src/index.ts split leads.csv -n 1000
 ```
@@ -280,6 +286,31 @@ csv-dedup split <file.csv> -n <rows> [--take <n>]
 | --- | --- | --- |
 | `--rows <n>` | `-n` | Max rows per chunk (required) |
 | `--take <n>` | | Only write the first N chunks (`--take 1` = head) |
+
+### sort
+
+Sort rows by a column. Automatically detects numeric vs alphabetical.
+
+```bash
+csv-dedup sort <file.csv> [-c <column>] [-d] [-o output.csv]
+```
+
+| Flag | Short | Description |
+| --- | --- | --- |
+| `--column <col>` | `-c` | Column to sort by (default: first column) |
+| `--desc` | `-d` | Sort descending |
+
+### repeat
+
+Duplicate every row N times.
+
+```bash
+csv-dedup repeat <file.csv> [-n <times>] [-o output.csv]
+```
+
+| Flag | Short | Description |
+| --- | --- | --- |
+| `--times <n>` | `-n` | Number of copies (default: 2) |
 
 ## Testing
 

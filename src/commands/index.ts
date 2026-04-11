@@ -9,7 +9,8 @@ import { pick } from "./pick";
 import { append } from "./append";
 import { join } from "./join";
 import { sort } from "./sort";
+import { repeat } from "./repeat";
 
 export const commands: Record<string, Cmd> = {
-  merge, stats, filter, split, format, cleave, pick, append, join, sort,
+  merge, stats, filter, split, format, cleave, pick, append, join, sort, repeat,
 };
