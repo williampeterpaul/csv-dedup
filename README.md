@@ -159,9 +159,9 @@ csv-dedup filter <file.csv> -e <expression> [-o output.csv]
 | `col>=n` | Greater than or equal |
 | `col<n` | Less than |
 | `col<=n` | Less than or equal |
-| `expr AND expr` | Conjunction |
+| `expr AND expr` | Conjunction (binds tighter than OR) |
 | `expr OR expr` | Disjunction |
-| `(a AND b) OR (c AND d)` | Grouped branches |
+| `(expr)` | Grouping — arbitrary nesting supported |
 
 #### File references (`@`)
 

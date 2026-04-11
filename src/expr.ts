@@ -3,24 +3,82 @@ import { fail } from "./cli";
 import { read as readCsv } from "./csv";
 
 type Pred = (val: string) => boolean;
+type RowPred = (row: string[]) => boolean;
+type Token = { type: "(" | ")" | "AND" | "OR" | "ATOM"; val: string };
 
-export async function compile(expr: string, headers: string[]): Promise<(row: string[]) => boolean> {
-  const branches = await Promise.all(expr.split(/\s+OR\s+/).map(async (branch) => {
-    const raw = branch.replace(/^\(|\)$/g, "").trim();
-    const parts = raw.split(/\s+AND\s+/);
-    const checks: { idx: number; test: Pred }[] = [];
+function tokenize(expr: string): Token[] {
+  const tokens: Token[] = [];
+  const re = /\(|\)|\s+AND\s+|\s+OR\s+/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
 
-    for (const part of parts) {
-      const { col, test } = await parse(part.trim());
-      const idx = headers.indexOf(col);
-      if (idx === -1) fail(`Column "${col}" not found`);
-      checks.push({ idx, test });
+  while ((m = re.exec(expr)) !== null) {
+    if (m.index > last) {
+      const atom = expr.slice(last, m.index).trim();
+      if (atom) tokens.push({ type: "ATOM", val: atom });
     }
+    const matched = m[0].trim();
+    if (matched === "(") tokens.push({ type: "(", val: "(" });
+    else if (matched === ")") tokens.push({ type: ")", val: ")" });
+    else tokens.push({ type: matched as "AND" | "OR", val: matched });
+    last = m.index + m[0].length;
+  }
 
-    return (row: string[]) => checks.every(({ idx, test }) => test(row[idx] ?? ""));
-  }));
+  if (last < expr.length) {
+    const atom = expr.slice(last).trim();
+    if (atom) tokens.push({ type: "ATOM", val: atom });
+  }
 
-  return (row) => branches.some((branch) => branch(row));
+  return tokens;
+}
+
+export async function compile(expr: string, headers: string[]): Promise<RowPred> {
+  const tokens = tokenize(expr);
+  let pos = 0;
+
+  function peek(): Token | undefined { return tokens[pos]; }
+  function next(): Token {
+    if (pos >= tokens.length) fail("Unexpected end of expression");
+    return tokens[pos++]!;
+  }
+
+  async function parseExpr(): Promise<RowPred> {
+    const branches: RowPred[] = [await parseTerm()];
+    while (peek()?.type === "OR") {
+      next();
+      branches.push(await parseTerm());
+    }
+    return branches.length === 1 ? branches[0]! : (row) => branches.some((b) => b(row));
+  }
+
+  async function parseTerm(): Promise<RowPred> {
+    const factors: RowPred[] = [await parseFactor()];
+    while (peek()?.type === "AND") {
+      next();
+      factors.push(await parseFactor());
+    }
+    return factors.length === 1 ? factors[0]! : (row) => factors.every((f) => f(row));
+  }
+
+  async function parseFactor(): Promise<RowPred> {
+    if (peek()?.type === "(") {
+      next();
+      const inner = await parseExpr();
+      const t = next();
+      if (t.type !== ")") fail(`Expected ")", got "${t.val}"`);
+      return inner;
+    }
+    const t = next();
+    if (t.type !== "ATOM") fail(`Expected expression, got "${t.val}"`);
+    const { col, test } = await leaf(t.val);
+    const idx = headers.indexOf(col);
+    if (idx === -1) fail(`Column "${col}" not found`);
+    return (row) => test(row[idx] ?? "");
+  }
+
+  const result = await parseExpr();
+  if (pos < tokens.length) fail(`Unexpected token: "${tokens[pos]!.val}"`);
+  return result;
 }
 
 async function load(path: string): Promise<string> {
@@ -29,7 +87,7 @@ async function load(path: string): Promise<string> {
   return Bun.file(abs).text();
 }
 
-async function parse(part: string): Promise<{ col: string; test: Pred }> {
+async function leaf(part: string): Promise<{ col: string; test: Pred }> {
   let m: RegExpMatchArray | null;
 
   if ((m = part.match(/^(.+?)!=(.*)$/))) {

@@ -150,6 +150,56 @@ describe("compile", () => {
     expect(pred(row("Acme", "DE", ""))).toBe(true);
     expect(pred(row("Acme", "FR", ""))).toBe(false);
   });
+
+  test("double parens ((a AND b))", async () => {
+    const pred = await compile("((country=US AND email!=''))", headers);
+    expect(pred(row("Acme", "US", "a@b.com"))).toBe(true);
+    expect(pred(row("Acme", "US", ""))).toBe(false);
+    expect(pred(row("Acme", "UK", "a@b.com"))).toBe(false);
+  });
+
+  test("OR inside AND: (a OR b) AND c", async () => {
+    const pred = await compile("(country=US OR country=UK) AND email!=''", headers);
+    expect(pred(row("Acme", "US", "a@b.com"))).toBe(true);
+    expect(pred(row("Acme", "UK", "a@b.com"))).toBe(true);
+    expect(pred(row("Acme", "US", ""))).toBe(false);
+    expect(pred(row("Acme", "FR", "a@b.com"))).toBe(false);
+  });
+
+  test("deeply nested: ((a AND b) OR c) AND d", async () => {
+    const h = ["name", "score", "revenue", "country"];
+    const pred = await compile("((score>50 AND revenue>20) OR country=US) AND name~corp", h);
+    expect(pred(["AcmeCorp", "60", "25", "UK"])).toBe(true);
+    expect(pred(["BigCorp", "10", "5", "US"])).toBe(true);
+    expect(pred(["Acme", "60", "25", "UK"])).toBe(false);
+    expect(pred(["Acme", "10", "5", "US"])).toBe(false);
+    expect(pred(["AcmeCorp", "10", "5", "UK"])).toBe(false);
+  });
+
+  test("nested double-paren OR branches", async () => {
+    const pred = await compile("((country=US AND name~corp)) OR ((country=UK AND email!=''))", headers);
+    expect(pred(row("AcmeCorp", "US", ""))).toBe(true);
+    expect(pred(row("Acme", "UK", "a@b.com"))).toBe(true);
+    expect(pred(row("Acme", "US", ""))).toBe(false);
+    expect(pred(row("Acme", "UK", ""))).toBe(false);
+  });
+
+  test("three-level nesting with mixed AND/OR", async () => {
+    const h = ["name", "country", "email", "score"];
+    // ((person match) AND (geo match)) OR high-score override
+    // person = name has text AND email non-empty
+    // geo    = US or (UK and score > 50)
+    const pred = await compile(
+      "((name!='' AND email!='') AND (country=US OR (country=UK AND score>50))) OR score>90",
+      h,
+    );
+    expect(pred(["Acme", "US", "a@b.com", "10"])).toBe(true);
+    expect(pred(["Acme", "UK", "a@b.com", "60"])).toBe(true);
+    expect(pred(["", "FR", "", "95"])).toBe(true);
+    expect(pred(["Acme", "UK", "a@b.com", "30"])).toBe(false);
+    expect(pred(["", "US", "", "10"])).toBe(false);
+    expect(pred(["Acme", "FR", "a@b.com", "50"])).toBe(false);
+  });
 });
 
 describe("@file", () => {
