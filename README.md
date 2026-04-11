@@ -129,18 +129,15 @@ csv-dedup stats <file.csv> [-e <expression>] [--group <col>]
 
 ### filter
 
-Filter rows by expression, reference file, or both.
+Filter rows by expression.
 
 ```bash
 csv-dedup filter <file.csv> -e <expression> [-o output.csv]
-csv-dedup filter <file.csv> --in <ref.csv> -c <cols> [-o output.csv]
 ```
 
 | Flag | Short | Description |
 | --- | --- | --- |
 | `--expr <expr>` | `-e` | Filter expression (repeatable, ANDed) |
-| `--in <file>` | | Reference CSV — keep rows whose key columns appear in this file |
-| `--columns <cols>` | `-c` | Columns to match on (required with `--in`) |
 | `--invert` | `-v` | Invert the filter — keep non-matching rows |
 | `--output <path>` | `-o` | Output file path (default: `<file>.out.csv`) |
 
@@ -153,6 +150,7 @@ csv-dedup filter <file.csv> --in <ref.csv> -c <cols> [-o output.csv]
 | `col=''` | Empty |
 | `col!=''` | Non-empty |
 | `col~sub` | Contains (case-insensitive) |
+| `col~~val` | Reverse contains — val contains col (case-insensitive) |
 | `col:a,b,c` | In set |
 | `col>n` | Greater than (numeric) |
 | `col>=n` | Greater than or equal |
@@ -161,6 +159,33 @@ csv-dedup filter <file.csv> --in <ref.csv> -c <cols> [-o output.csv]
 | `expr AND expr` | Conjunction |
 | `expr OR expr` | Disjunction |
 | `(a AND b) OR (c AND d)` | Grouped branches |
+
+#### File references (`@`)
+
+Both `:` and `~~` support `@path` to load values from a file instead of inlining them:
+
+| Syntax | Meaning |
+| --- | --- |
+| `col:@file.csv` | **Exact set match** — parses CSV, first column (skips header) as allowed values |
+| `col:@file.txt` | **Exact set match** — each line is an allowed value |
+| `col~~@file` | **Substring match** — loads entire file as raw text, checks if it contains the column value |
+
+```bash
+# Keep rows whose country is listed in a CSV
+csv-dedup filter leads.csv -e "country:@countries.csv"
+
+# Same but from a plain text file (one value per line)
+csv-dedup filter leads.csv -e "country:@countries.txt"
+
+# Substring match — column value appears anywhere in the file
+csv-dedup filter leads.csv -e "email~~@allowlist.txt"
+
+# Exclude rows matching a blocklist
+csv-dedup filter leads.csv -e "email~~@blocklist.txt" --invert
+
+# OR across different columns/files
+csv-dedup filter leads.csv -e "email:@emails.csv OR domain:@domains.csv"
+```
 
 ### format
 

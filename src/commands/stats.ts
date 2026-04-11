@@ -62,7 +62,7 @@ export const stats: Cmd = {
     const file = await one(pos, "stats");
     const { headers, rows } = await read(file);
 
-    const preds = (opts.expr ?? []).map((e) => compile(e, headers));
+    const preds = await Promise.all((opts.expr ?? []).map((e) => compile(e, headers)));
     const filtered = preds.length
       ? rows.filter((row) => preds.every((p) => p(row)))
       : rows;

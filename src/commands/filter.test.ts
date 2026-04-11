@@ -84,14 +84,14 @@ describe("filter", () => {
     expect(sheet.rows.every((r) => r[1] === "US" || r[1] === "FR")).toBe(true);
   });
 
-  test("--in keeps rows matching reference file", async () => {
+  test("reverse contains (~~) keeps matching rows", async () => {
     const t = await tmp();
     cleanup = t.cleanup;
     const file = await t.file("data.csv", csv);
-    const ref = await t.file("allow.txt", "acme@test.com\ndelta@test.com\n");
     const out = join(t.dir, "out.csv");
+    const haystack = "acme@test.com\ndelta@test.com";
 
-    const { code } = await run("filter", file, "--in", ref, "-c", "email", "-o", out);
+    const { code } = await run("filter", file, "-e", `email~~${haystack}`, "-o", out);
 
     expect(code).toBe(0);
     const sheet = await read(out);
@@ -99,14 +99,14 @@ describe("filter", () => {
     expect(sheet.rows.map((r) => r[0])).toEqual(["Acme", "Delta"]);
   });
 
-  test("--in --invert excludes rows matching reference file", async () => {
+  test("reverse contains (~~) with --invert excludes matching rows", async () => {
     const t = await tmp();
     cleanup = t.cleanup;
     const file = await t.file("data.csv", csv);
-    const ref = await t.file("block.txt", "acme@test.com\ndelta@test.com\n");
     const out = join(t.dir, "out.csv");
+    const haystack = "acme@test.com\ndelta@test.com";
 
-    const { code } = await run("filter", file, "--in", ref, "-c", "email", "--invert", "-o", out);
+    const { code } = await run("filter", file, "-e", `email~~${haystack}`, "--invert", "-o", out);
 
     expect(code).toBe(0);
     const sheet = await read(out);
@@ -128,15 +128,14 @@ describe("filter", () => {
     expect(sheet.rows.every((r) => r[1] !== "US")).toBe(true);
   });
 
-  test("errors when --in given without -c", async () => {
+  test("errors when no -e given", async () => {
     const t = await tmp();
     cleanup = t.cleanup;
     const file = await t.file("data.csv", csv);
-    const ref = await t.file("ref.txt", "foo@bar.com\n");
 
-    const { code, stderr } = await run("filter", file, "--in", ref);
+    const { code, stderr } = await run("filter", file);
 
     expect(code).not.toBe(0);
-    expect(stderr).toContain("--columns");
+    expect(stderr).toContain("--expr");
   });
 });

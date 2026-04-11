@@ -1,27 +1,35 @@
+import { resolve } from "node:path";
 import { fail } from "./cli";
+import { read as readCsv } from "./csv";
 
 type Pred = (val: string) => boolean;
 
-export function compile(expr: string, headers: string[]): (row: string[]) => boolean {
-  const branches = expr.split(/\s+OR\s+/).map((branch) => {
+export async function compile(expr: string, headers: string[]): Promise<(row: string[]) => boolean> {
+  const branches = await Promise.all(expr.split(/\s+OR\s+/).map(async (branch) => {
     const raw = branch.replace(/^\(|\)$/g, "").trim();
     const parts = raw.split(/\s+AND\s+/);
     const checks: { idx: number; test: Pred }[] = [];
 
     for (const part of parts) {
-      const { col, test } = parse(part.trim());
+      const { col, test } = await parse(part.trim());
       const idx = headers.indexOf(col);
       if (idx === -1) fail(`Column "${col}" not found`);
       checks.push({ idx, test });
     }
 
     return (row: string[]) => checks.every(({ idx, test }) => test(row[idx] ?? ""));
-  });
+  }));
 
   return (row) => branches.some((branch) => branch(row));
 }
 
-function parse(part: string): { col: string; test: Pred } {
+async function load(path: string): Promise<string> {
+  const abs = resolve(path);
+  if (!(await Bun.file(abs).exists())) fail(`File not found: ${abs}`);
+  return Bun.file(abs).text();
+}
+
+async function parse(part: string): Promise<{ col: string; test: Pred }> {
   let m: RegExpMatchArray | null;
 
   if ((m = part.match(/^(.+?)!=(.*)$/))) {
@@ -58,8 +66,28 @@ function parse(part: string): { col: string; test: Pred } {
   if (part.includes(":")) {
     const [c, v] = part.split(":", 2);
     const col = c!.trim();
-    const vals = new Set(v!.split(",").map((s) => s.trim()));
+    const raw = v!.trim();
+    if (raw.startsWith("@")) {
+      const path = raw.slice(1);
+      const vals = path.endsWith(".csv")
+        ? new Set((await readCsv(resolve(path))).rows.map((r) => r[0] ?? ""))
+        : new Set((await load(path)).split("\n").map((s) => s.trim()).filter(Boolean));
+      return { col, test: (v) => vals.has(v) };
+    }
+    const vals = new Set(raw.split(",").map((s) => s.trim()));
     return { col, test: (v) => vals.has(v) };
+  }
+
+  if (part.includes("~~")) {
+    const [c, v] = part.split("~~", 2);
+    const col = c!.trim();
+    const raw = v!.trim();
+    if (raw.startsWith("@")) {
+      const hay = (await load(raw.slice(1))).toLowerCase();
+      return { col, test: (v) => v !== "" && hay.includes(v.toLowerCase()) };
+    }
+    const hay = unquote(raw).toLowerCase();
+    return { col, test: (v) => v !== "" && hay.includes(v.toLowerCase()) };
   }
 
   if (part.includes("~")) {
