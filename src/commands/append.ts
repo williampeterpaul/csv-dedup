@@ -3,6 +3,7 @@ import type { Cmd } from "../types";
 import { usage, fail } from "../cli";
 import { one, dest, log } from "../util";
 import { read, write } from "../csv";
+import { compile } from "../expr";
 
 export const append: Cmd = {
   name: "append",
@@ -12,6 +13,7 @@ export const append: Cmd = {
       allowPositionals: true,
       options: {
         set: { type: "string", multiple: true },
+        expr: { type: "string", short: "e", multiple: true },
         output: { type: "string", short: "o" },
         help: { type: "boolean", short: "h" },
       },
@@ -33,6 +35,8 @@ export const append: Cmd = {
     const file = await one(pos, "append");
     const { headers, rows } = await read(file);
 
+    const preds = await Promise.all((opts.expr ?? []).map((e) => compile(e, headers)));
+
     const outHeaders = [...headers];
     const assignments: { idx: number; val: string }[] = [];
 
@@ -46,10 +50,14 @@ export const append: Cmd = {
       }
     }
 
+    let matched = 0;
     const outRows = rows.map((row) => {
       const nr = [...row];
       while (nr.length < outHeaders.length) nr.push("");
-      for (const { idx, val } of assignments) nr[idx] = val;
+      if (!preds.length || preds.every((p) => p(row))) {
+        for (const { idx, val } of assignments) nr[idx] = val;
+        matched++;
+      }
       return nr;
     });
 
@@ -57,8 +65,9 @@ export const append: Cmd = {
     await write(out, outHeaders, outRows);
 
     const desc = pairs.map((p) => `${p.col}=${p.val}`).join(", ");
+    const scope = preds.length ? `${matched} of ${rows.length}` : `${rows.length}`;
     log(
-      `Append ${pairs.length} column(s) across ${rows.length} rows`,
+      `Append ${pairs.length} column(s) across ${scope} rows`,
       `Set: ${desc}`,
       `Output: ${out}`,
     );

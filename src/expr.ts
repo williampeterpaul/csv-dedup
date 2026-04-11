@@ -175,6 +175,20 @@ async function leaf(part: string): Promise<{ col: string; test: Pred }> {
     return { col, test: (v) => v !== "" && hay.includes(v.toLowerCase()) };
   }
 
+  if (part.includes("!~/")) {
+    const [c, rest] = part.split("!~/", 2);
+    const col = c!.trim();
+    const re = regex(rest!);
+    return { col, test: not((v) => re.test(v)) };
+  }
+
+  if (part.includes("~/")) {
+    const [c, rest] = part.split("~/", 2);
+    const col = c!.trim();
+    const re = regex(rest!);
+    return { col, test: (v) => re.test(v) };
+  }
+
   if (part.includes("!~")) {
     const [c, v] = part.split("!~", 2);
     const col = c!.trim();
@@ -202,6 +216,14 @@ async function leaf(part: string): Promise<{ col: string; test: Pred }> {
 
 function not(fn: Pred): Pred {
   return (v) => !fn(v);
+}
+
+function regex(s: string): RegExp {
+  const last = s.lastIndexOf("/");
+  if (last < 0) fail("Invalid regex: missing closing /");
+  const pattern = s.slice(0, last);
+  const flags = s.slice(last + 1);
+  return new RegExp(pattern, flags);
 }
 
 function num(s: string, expr: string): number {

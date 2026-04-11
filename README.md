@@ -151,6 +151,8 @@ csv-dedup filter <file.csv> -e <expression> [-o output.csv]
 | `col!=''` | Non-empty |
 | `col~sub` | Contains (case-insensitive) |
 | `col!~sub` | Does not contain |
+| `col~/pattern/` | Regex match (append `i` flag for case-insensitive) |
+| `col!~/pattern/` | Negated regex |
 | `col~~val` | Reverse contains — val contains col (case-insensitive) |
 | `col!~~val` | Reverse does not contain |
 | `col:a,b,c` | In set |
@@ -240,15 +242,16 @@ csv-dedup pick <file.csv> --drop <cols> [-o output.csv]
 
 ### append
 
-Add or overwrite a column with a literal value.
+Add or overwrite a column with a literal value. With `-e`, only matching rows are updated.
 
 ```bash
-csv-dedup append <file.csv> --set <col=val> [-o output.csv]
+csv-dedup append <file.csv> --set <col=val> [-e <expr>] [-o output.csv]
 ```
 
 | Flag | Description |
 | --- | --- |
 | `--set <col=val>` | Column name and value (repeatable) |
+| `-e, --expr <expr>` | Only apply to matching rows (repeatable, ANDed) |
 
 ### join
 

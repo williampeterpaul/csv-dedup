@@ -127,12 +127,14 @@
       "usage": "csv-dedup append <file.csv> --set <col=val> [options]",
       "options": [
         { "flag": "--set <col=val>", "about": "Column name and value (repeatable)" },
+        { "flag": "-e, --expr <expr>", "about": "Only apply to rows matching expression (repeatable, ANDed)" },
         { "flag": "-o, --output <path>", "about": "Output file path (default: <file>.out.csv)" },
         { "flag": "-h, --help", "about": "Show this help" }
       ],
       "examples": [
         "csv-dedup append leads.csv --set source=linkedin",
-        "csv-dedup append leads.csv --set batch=2024-Q1 --set status=new -o tagged.csv"
+        "csv-dedup append leads.csv --set batch=2024-Q1 --set status=new -o tagged.csv",
+        "csv-dedup append leads.csv --set status=valid -e \"email~/^[^@]+@[^@]+\\.[^@]+$/\""
       ]
     },
     "join": {

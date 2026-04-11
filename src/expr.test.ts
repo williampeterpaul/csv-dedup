@@ -121,6 +121,39 @@ describe("compile", () => {
     expect(pred(row("Acme", "DE", ""))).toBe(false);
   });
 
+  test("regex match col~/pattern/", async () => {
+    const pred = await compile("name~/^Acme/", headers);
+    expect(pred(row("Acme", "US", ""))).toBe(true);
+    expect(pred(row("AcmeCorp", "US", ""))).toBe(true);
+    expect(pred(row("Big Acme", "US", ""))).toBe(false);
+    expect(pred(row("acme", "US", ""))).toBe(false);
+  });
+
+  test("regex match case-insensitive col~/pattern/i", async () => {
+    const pred = await compile("name~/^acme/i", headers);
+    expect(pred(row("Acme", "US", ""))).toBe(true);
+    expect(pred(row("ACME", "US", ""))).toBe(true);
+    expect(pred(row("acmecorp", "US", ""))).toBe(true);
+    expect(pred(row("Big", "US", ""))).toBe(false);
+  });
+
+  test("negated regex col!~/pattern/", async () => {
+    const pred = await compile("name!~/^Acme/", headers);
+    expect(pred(row("Big", "US", ""))).toBe(true);
+    expect(pred(row("acme", "US", ""))).toBe(true);
+    expect(pred(row("Acme", "US", ""))).toBe(false);
+    expect(pred(row("AcmeCorp", "US", ""))).toBe(false);
+  });
+
+  test("regex email validation", async () => {
+    const pred = await compile("email~/^[^@]+@[^@]+\\.[^@]+$/", headers);
+    expect(pred(row("A", "US", "a@b.com"))).toBe(true);
+    expect(pred(row("A", "US", "user@domain.co.uk"))).toBe(true);
+    expect(pred(row("A", "US", "bad"))).toBe(false);
+    expect(pred(row("A", "US", "@no-local.com"))).toBe(false);
+    expect(pred(row("A", "US", ""))).toBe(false);
+  });
+
   test("numeric comparison with decimals", async () => {
     const h = ["name", "rate"];
     const pred = await compile("rate>=3.5", h);
