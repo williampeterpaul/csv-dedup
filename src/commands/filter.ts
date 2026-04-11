@@ -44,20 +44,17 @@ export const filter: Cmd = {
     if (hasIn) {
       const abs = resolve(opts.in!);
       if (!(await Bun.file(abs).exists())) fail(`File not found: ${abs}`);
-      const ref = await read(abs);
+      const ref = await Bun.file(abs).text();
       const colNames = opts.columns!.split(",").map((s) => s.trim());
       const srcIdxs = colNames.map((n) => {
         const i = headers.indexOf(n);
         if (i === -1) fail(`Column "${n}" not found in source`);
         return i;
       });
-      const refIdxs = colNames.map((n) => {
-        const i = ref.headers.indexOf(n);
-        if (i === -1) fail(`Column "${n}" not found in --in file`);
-        return i;
-      });
-      const keys = new Set(ref.rows.map((r) => refIdxs.map((i) => r[i] ?? "").join("\0")));
-      preds.push((row) => keys.has(srcIdxs.map((i) => row[i] ?? "").join("\0")));
+      preds.push((row) => srcIdxs.some((i) => {
+        const v = row[i] ?? "";
+        return v !== "" && ref.includes(v);
+      }));
     }
 
     const inv = !!opts.invert;

@@ -88,7 +88,7 @@ describe("filter", () => {
     const t = await tmp();
     cleanup = t.cleanup;
     const file = await t.file("data.csv", csv);
-    const ref = await t.file("allow.csv", "email\nacme@test.com\ndelta@test.com\n");
+    const ref = await t.file("allow.txt", "acme@test.com\ndelta@test.com\n");
     const out = join(t.dir, "out.csv");
 
     const { code } = await run("filter", file, "--in", ref, "-c", "email", "-o", out);
@@ -103,7 +103,7 @@ describe("filter", () => {
     const t = await tmp();
     cleanup = t.cleanup;
     const file = await t.file("data.csv", csv);
-    const ref = await t.file("block.csv", "email\nacme@test.com\ndelta@test.com\n");
+    const ref = await t.file("block.txt", "acme@test.com\ndelta@test.com\n");
     const out = join(t.dir, "out.csv");
 
     const { code } = await run("filter", file, "--in", ref, "-c", "email", "--invert", "-o", out);
@@ -132,7 +132,7 @@ describe("filter", () => {
     const t = await tmp();
     cleanup = t.cleanup;
     const file = await t.file("data.csv", csv);
-    const ref = await t.file("ref.csv", "email\nfoo@bar.com\n");
+    const ref = await t.file("ref.txt", "foo@bar.com\n");
 
     const { code, stderr } = await run("filter", file, "--in", ref);
 

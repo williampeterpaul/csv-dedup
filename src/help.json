@@ -40,8 +40,8 @@
       "usage": "csv-dedup filter <file.csv> (-e <expr> | --in <file> -c <cols>) [options]",
       "options": [
         { "flag": "-e, --expr <expr>", "about": "Filter expression (repeatable, ANDed). See syntax below" },
-        { "flag": "--in <file>", "about": "Reference CSV — keep rows whose key columns appear in this file" },
-        { "flag": "-c, --columns <cols>", "about": "Columns to match on (required with --in)" },
+        { "flag": "--in <file>", "about": "Reference text file — keep rows whose column value appears anywhere in this file" },
+        { "flag": "-c, --columns <cols>", "about": "Column to substring-match against --in file contents (required with --in)" },
         { "flag": "-v, --invert", "about": "Invert the filter — keep non-matching rows" },
         { "flag": "-o, --output <path>", "about": "Output file path (default: <file>.out.csv)" },
         { "flag": "-h, --help", "about": "Show this help" }
@@ -50,8 +50,8 @@
         "csv-dedup filter leads.csv -e \"country=US\"",
         "csv-dedup filter leads.csv -e \"email!=''\" -e \"country:US,UK,DE\"",
         "csv-dedup filter leads.csv -e \"name~corp AND country!=''\" -o filtered.csv",
-        "csv-dedup filter leads.csv --in allow.csv -c email",
-        "csv-dedup filter leads.csv --in block.csv -c email --invert",
+        "csv-dedup filter leads.csv --in allow.txt -c email",
+        "csv-dedup filter leads.csv --in block.txt -c email --invert",
         "csv-dedup filter leads.csv -e \"country=US\" --invert"
       ]
     },
