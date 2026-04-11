@@ -9,7 +9,9 @@ export async function read(path: string): Promise<Sheet> {
     skipEmptyLines: true,
   });
 
-  const errs = parsed.errors.filter((e) => e.code !== "UndetectableDelimiter");
+  const warns = parsed.errors.filter((e) => e.code === "InvalidQuotes");
+  const errs = parsed.errors.filter((e) => e.code !== "UndetectableDelimiter" && e.code !== "InvalidQuotes");
+  if (warns.length > 0) console.error(`Warning: ${warns.length} row(s) with malformed quotes (parsed best-effort)`);
   if (errs.length > 0) {
     console.error("CSV parse errors:", errs);
     process.exit(1);

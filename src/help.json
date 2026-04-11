@@ -152,6 +152,22 @@
         "csv-dedup join contacts.csv --from first,last --glue \" \" --as full_name",
         "csv-dedup join data.csv --from city,state,zip --glue \", \" --as address --drop"
       ]
+    },
+    "sort": {
+      "about": "Sort rows by a column",
+      "usage": "csv-dedup sort <file.csv> [-c <column>] [options]",
+      "options": [
+        { "flag": "-c, --column <col>", "about": "Column to sort by (default: first column)" },
+        { "flag": "-d, --desc", "about": "Sort descending" },
+
+        { "flag": "-o, --output <path>", "about": "Output file path (default: <file>.out.csv)" },
+        { "flag": "-h, --help", "about": "Show this help" }
+      ],
+      "examples": [
+        "csv-dedup sort leads.csv -c domain",
+        "csv-dedup sort leads.csv -c score -n -d",
+        "csv-dedup sort leads.csv -o sorted.csv"
+      ]
     }
   }
 }
