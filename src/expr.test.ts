@@ -98,6 +98,29 @@ describe("compile", () => {
     expect(pred(["Acme", "51"])).toBe(false);
   });
 
+  test("not contains col!~sub", async () => {
+    const pred = await compile("name!~corp", headers);
+    expect(pred(row("Acme", "US", ""))).toBe(true);
+    expect(pred(row("AcmeCorp", "US", ""))).toBe(false);
+    expect(pred(row("BIGCORP", "US", ""))).toBe(false);
+  });
+
+  test("not reverse contains col!~~val", async () => {
+    const pred = await compile("name!~~Alice Bob Charlie", headers);
+    expect(pred(row("Dave", "US", ""))).toBe(true);
+    expect(pred(row("", "US", ""))).toBe(true);
+    expect(pred(row("Bob", "US", ""))).toBe(false);
+    expect(pred(row("alice", "US", ""))).toBe(false);
+  });
+
+  test("not in set col!:val1,val2", async () => {
+    const pred = await compile("country!:US,UK,DE", headers);
+    expect(pred(row("Acme", "FR", ""))).toBe(true);
+    expect(pred(row("Acme", "JP", ""))).toBe(true);
+    expect(pred(row("Acme", "US", ""))).toBe(false);
+    expect(pred(row("Acme", "DE", ""))).toBe(false);
+  });
+
   test("numeric comparison with decimals", async () => {
     const h = ["name", "rate"];
     const pred = await compile("rate>=3.5", h);
@@ -178,6 +201,52 @@ describe("@file", () => {
     expect(pred(row("Gamma", "US", "gamma@test.com"))).toBe(true);
     expect(pred(row("Beta", "UK", "beta@test.com"))).toBe(false);
     expect(pred(row("Delta", "FR", ""))).toBe(false);
+  });
+
+  test("col!:@file.csv negates set from csv", async () => {
+    const t = await tmp();
+    cleanup = t.cleanup;
+    const ref = await t.file("countries.csv", "code\nUS\nUK\nDE\n");
+
+    const pred = await compile(`country!:@${ref}`, headers);
+    expect(pred(row("Acme", "FR", ""))).toBe(true);
+    expect(pred(row("Acme", "JP", ""))).toBe(true);
+    expect(pred(row("Acme", "US", ""))).toBe(false);
+    expect(pred(row("Acme", "DE", ""))).toBe(false);
+  });
+
+  test("col!:@file.txt negates set from txt", async () => {
+    const t = await tmp();
+    cleanup = t.cleanup;
+    const ref = await t.file("countries.txt", "US\nUK\nDE\n");
+
+    const pred = await compile(`country!:@${ref}`, headers);
+    expect(pred(row("Acme", "FR", ""))).toBe(true);
+    expect(pred(row("Acme", "US", ""))).toBe(false);
+  });
+
+  test("col!~~@file.csv negates haystack from csv", async () => {
+    const t = await tmp();
+    cleanup = t.cleanup;
+    const ref = await t.file("data.csv", "email\nacme@test.com\ngamma@test.com\n");
+
+    const pred = await compile(`email!~~@${ref}`, headers);
+    expect(pred(row("Beta", "UK", "beta@test.com"))).toBe(true);
+    expect(pred(row("Delta", "FR", ""))).toBe(true);
+    expect(pred(row("Acme", "US", "acme@test.com"))).toBe(false);
+    expect(pred(row("Acme", "US", "acme"))).toBe(false);
+  });
+
+  test("col!~~@file.txt negates haystack from txt", async () => {
+    const t = await tmp();
+    cleanup = t.cleanup;
+    const ref = await t.file("emails.txt", "acme@test.com\ngamma@test.com\n");
+
+    const pred = await compile(`email!~~@${ref}`, headers);
+    expect(pred(row("Beta", "UK", "beta@test.com"))).toBe(true);
+    expect(pred(row("Delta", "FR", ""))).toBe(true);
+    expect(pred(row("Acme", "US", "acme@test.com"))).toBe(false);
+    expect(pred(row("Gamma", "US", "gamma@test.com"))).toBe(false);
   });
 
   test("@file not found exits with error", async () => {

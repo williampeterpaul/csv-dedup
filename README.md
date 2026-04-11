@@ -150,8 +150,11 @@ csv-dedup filter <file.csv> -e <expression> [-o output.csv]
 | `col=''` | Empty |
 | `col!=''` | Non-empty |
 | `col~sub` | Contains (case-insensitive) |
+| `col!~sub` | Does not contain |
 | `col~~val` | Reverse contains — val contains col (case-insensitive) |
+| `col!~~val` | Reverse does not contain |
 | `col:a,b,c` | In set |
+| `col!:a,b,c` | Not in set |
 | `col>n` | Greater than (numeric) |
 | `col>=n` | Greater than or equal |
 | `col<n` | Less than |

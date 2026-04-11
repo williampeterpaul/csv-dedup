@@ -63,6 +63,21 @@ async function parse(part: string): Promise<{ col: string; test: Pred }> {
     return { col, test: (v) => { const n = parseFloat(v); return !isNaN(n) && n < threshold; } };
   }
 
+  if (part.includes("!:")) {
+    const [c, v] = part.split("!:", 2);
+    const col = c!.trim();
+    const raw = v!.trim();
+    if (raw.startsWith("@")) {
+      const path = raw.slice(1);
+      const vals = path.endsWith(".csv")
+        ? new Set((await readCsv(resolve(path))).rows.map((r) => r[0] ?? ""))
+        : new Set((await load(path)).split("\n").map((s) => s.trim()).filter(Boolean));
+      return { col, test: not((v) => vals.has(v)) };
+    }
+    const vals = new Set(raw.split(",").map((s) => s.trim()));
+    return { col, test: not((v) => vals.has(v)) };
+  }
+
   if (part.includes(":")) {
     const [c, v] = part.split(":", 2);
     const col = c!.trim();
@@ -78,6 +93,18 @@ async function parse(part: string): Promise<{ col: string; test: Pred }> {
     return { col, test: (v) => vals.has(v) };
   }
 
+  if (part.includes("!~~")) {
+    const [c, v] = part.split("!~~", 2);
+    const col = c!.trim();
+    const raw = v!.trim();
+    if (raw.startsWith("@")) {
+      const hay = (await load(raw.slice(1))).toLowerCase();
+      return { col, test: not((v) => v !== "" && hay.includes(v.toLowerCase())) };
+    }
+    const hay = unquote(raw).toLowerCase();
+    return { col, test: not((v) => v !== "" && hay.includes(v.toLowerCase())) };
+  }
+
   if (part.includes("~~")) {
     const [c, v] = part.split("~~", 2);
     const col = c!.trim();
@@ -88,6 +115,13 @@ async function parse(part: string): Promise<{ col: string; test: Pred }> {
     }
     const hay = unquote(raw).toLowerCase();
     return { col, test: (v) => v !== "" && hay.includes(v.toLowerCase()) };
+  }
+
+  if (part.includes("!~")) {
+    const [c, v] = part.split("!~", 2);
+    const col = c!.trim();
+    const sub = v!.trim();
+    return { col, test: not((v) => v.toLowerCase().includes(sub.toLowerCase())) };
   }
 
   if (part.includes("~")) {
@@ -106,6 +140,10 @@ async function parse(part: string): Promise<{ col: string; test: Pred }> {
   }
 
   fail(`Invalid expression: ${part}`);
+}
+
+function not(fn: Pred): Pred {
+  return (v) => !fn(v);
 }
 
 function num(s: string, expr: string): number {
