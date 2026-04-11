@@ -179,4 +179,31 @@ describe("@file", () => {
     expect(pred(row("Beta", "UK", "beta@test.com"))).toBe(false);
     expect(pred(row("Delta", "FR", ""))).toBe(false);
   });
+
+  test("@file not found exits with error", async () => {
+    expect(compile("country:@/tmp/does-not-exist.csv", headers)).rejects.toThrow();
+  });
+
+  test("col:@file.csv handles quoted values and trailing commas", async () => {
+    const t = await tmp();
+    cleanup = t.cleanup;
+    const ref = await t.file("domains.csv", 'domain,\n"0-mail.com",\n"example.com",\n');
+
+    const h = ["name", "domain"];
+    const pred = await compile(`domain:@${ref}`, h);
+    expect(pred(["Acme", "0-mail.com"])).toBe(true);
+    expect(pred(["Beta", "example.com"])).toBe(true);
+    expect(pred(["Gamma", "other.com"])).toBe(false);
+  });
+
+  test("@file works with AND/OR expressions", async () => {
+    const t = await tmp();
+    cleanup = t.cleanup;
+    const ref = await t.file("countries.txt", "US\nUK\n");
+
+    const pred = await compile(`country:@${ref} AND email!=''`, headers);
+    expect(pred(row("Acme", "US", "a@b.com"))).toBe(true);
+    expect(pred(row("Acme", "US", ""))).toBe(false);
+    expect(pred(row("Acme", "FR", "a@b.com"))).toBe(false);
+  });
 });
