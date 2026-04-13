@@ -41,6 +41,12 @@ bun run src/index.ts cleave contacts.csv -c email --on "@" --as user,domain
 # Sort rows by column (auto-detects numeric vs alphabetical)
 bun run src/index.ts sort leads.csv -c domain
 
+# Deduplicate by key
+bun run src/index.ts unique leads.csv -k email
+
+# Deduplicate by name, only where name is long enough
+bun run src/index.ts unique leads.csv -k name -e "name.len>=6"
+
 # Duplicate every row
 bun run src/index.ts repeat leads.csv -n 2
 
@@ -167,6 +173,8 @@ csv-dedup filter <file.csv> -e <expression> [-o output.csv]
 | `col>=n` | Greater than or equal |
 | `col<n` | Less than |
 | `col<=n` | Less than or equal |
+| `col.len>n` | String length comparison (supports `>`, `>=`, `<`, `<=`, `=`, `!=`) |
+| `colA%colB>=n` | Jaro-Winkler similarity between two columns (0–1, supports all comparisons) |
 | `expr AND expr` | Conjunction (binds tighter than OR) |
 | `expr OR expr` | Disjunction |
 | `(expr)` | Grouping — arbitrary nesting supported |
@@ -274,6 +282,32 @@ csv-dedup join <file.csv> --from <cols> --as <name> [--glue <str>] [-o output.cs
 | `--as <name>` | New column name (required) |
 | `--drop` | Remove source columns after joining |
 
+### unique
+
+Deduplicate rows by key columns. With `-e`, only rows matching the expression are deduped — non-matching rows pass through untouched.
+
+```bash
+csv-dedup unique <file.csv> -k <keys> [-e <expr>] [-o output.csv]
+```
+
+| Flag | Short | Description |
+| --- | --- | --- |
+| `--keys <cols>` | `-k` | Key column(s) for dedup (required) |
+| `--expr <expr>` | `-e` | Only dedup rows matching expression; others kept as-is (repeatable, ANDed) |
+| `--columns <cols>` | `-c` | Columns to include in output |
+| `--output <path>` | `-o` | Output file path (default: `<file>.out.csv`) |
+
+```bash
+# Basic dedup by email
+csv-dedup unique leads.csv -k email
+
+# Dedup by name, but only where name is at least 6 chars
+csv-dedup unique leads.csv -k name -e "name.len>=6"
+
+# Dedup by domain, skipping rows with empty domain
+csv-dedup unique leads.csv -k domain -e "domain!=''" -o deduped.csv
+```
+
 ### split
 
 Split a CSV into fixed-size chunks, each with headers.
@@ -318,4 +352,4 @@ csv-dedup repeat <file.csv> [-n <times>] [-o output.csv]
 bun test
 ```
 
-82 tests across unit tests (expression compiler, CSV helpers, strategies) and integration tests (every command exercised via subprocess).
+141 tests across unit tests (expression compiler, CSV helpers, strategies) and integration tests (every command exercised via subprocess).

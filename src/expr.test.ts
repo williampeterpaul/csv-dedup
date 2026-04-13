@@ -1,5 +1,5 @@
 import { test, expect, describe, afterAll } from "bun:test";
-import { compile } from "./expr";
+import { compile, jw } from "./expr";
 import { tmp } from "../test/fixture";
 
 const headers = ["name", "country", "email"];
@@ -154,6 +154,28 @@ describe("compile", () => {
     expect(pred(row("A", "US", ""))).toBe(false);
   });
 
+  test("regex with angle brackets and parens in char class", async () => {
+    const pred = await compile("name~/[0-9@#<>(){}]/", headers);
+    expect(pred(row("John123", "US", ""))).toBe(true);
+    expect(pred(row("test@name", "US", ""))).toBe(true);
+    expect(pred(row("<script>", "US", ""))).toBe(true);
+    expect(pred(row("fn()", "US", ""))).toBe(true);
+    expect(pred(row("Alice", "US", ""))).toBe(false);
+  });
+
+  test("negated regex with special chars in char class", async () => {
+    const pred = await compile("name!~/[0-9@#<>(){}]/", headers);
+    expect(pred(row("Alice", "US", ""))).toBe(true);
+    expect(pred(row("John123", "US", ""))).toBe(false);
+  });
+
+  test("regex with parens inside AND expression", async () => {
+    const pred = await compile("(name~/[()]/)" + " AND " + "country=US", headers);
+    expect(pred(row("fn()", "US", ""))).toBe(true);
+    expect(pred(row("fn()", "UK", ""))).toBe(false);
+    expect(pred(row("Alice", "US", ""))).toBe(false);
+  });
+
   test("numeric comparison with decimals", async () => {
     const h = ["name", "rate"];
     const pred = await compile("rate>=3.5", h);
@@ -233,6 +255,85 @@ describe("compile", () => {
     expect(pred(["", "US", "", "10"])).toBe(false);
     expect(pred(["Acme", "FR", "a@b.com", "50"])).toBe(false);
   });
+});
+
+describe("length .len operator", () => {
+  test("col.len>n", async () => {
+    const pred = await compile("name.len>5", headers);
+    expect(pred(row("Abcdef", "US", ""))).toBe(true);
+    expect(pred(row("Abcde", "US", ""))).toBe(false);
+    expect(pred(row("Ab", "US", ""))).toBe(false);
+  });
+
+  test("col.len<=n", async () => {
+    const pred = await compile("name.len<=3", headers);
+    expect(pred(row("Abc", "US", ""))).toBe(true);
+    expect(pred(row("Ab", "US", ""))).toBe(true);
+    expect(pred(row("Abcd", "US", ""))).toBe(false);
+  });
+
+  test("col.len=n", async () => {
+    const pred = await compile("name.len=4", headers);
+    expect(pred(row("Acme", "US", ""))).toBe(true);
+    expect(pred(row("Ace", "US", ""))).toBe(false);
+  });
+
+  test("col.len>=n combined with AND", async () => {
+    const pred = await compile("name.len>=3 AND country=US", headers);
+    expect(pred(row("Acme", "US", ""))).toBe(true);
+    expect(pred(row("Al", "US", ""))).toBe(false);
+    expect(pred(row("Acme", "UK", ""))).toBe(false);
+  });
+});
+
+describe("jw", () => {
+  test("identical strings → 1", () => {
+    expect(jw("Martha", "Martha")).toBe(1);
+  });
+
+  test("case-insensitive", () => {
+    expect(jw("MARTHA", "martha")).toBe(1);
+  });
+
+  test("empty string → 0", () => {
+    expect(jw("", "Martha")).toBe(0);
+    expect(jw("Martha", "")).toBe(0);
+  });
+
+  test("similar strings score high", () => {
+    expect(jw("Martha", "Marhta")).toBeGreaterThan(0.96);
+    expect(jw("Dwayne", "Duane")).toBeGreaterThan(0.84);
+  });
+
+  test("dissimilar strings score low", () => {
+    expect(jw("Apple", "Zebra")).toBeLessThan(0.5);
+  });
+});
+
+describe("similarity % operator", () => {
+  const h = ["company", "name", "city"];
+  const r = (company: string, name: string, city: string) => [company, name, city];
+
+  test("colA%colB>=threshold", async () => {
+    const pred = await compile("company%name>=0.9", h);
+    expect(pred(r("Acme Corp", "Acme Corp", "NYC"))).toBe(true);
+    expect(pred(r("Acme Corp", "Acme Corp.", "NYC"))).toBe(true);
+    expect(pred(r("Acme Corp", "Totally Different", "NYC"))).toBe(false);
+  });
+
+  test("colA%colB<threshold", async () => {
+    const pred = await compile("company%name<0.5", h);
+    expect(pred(r("Apple", "Zebra", "LA"))).toBe(true);
+    expect(pred(r("Apple", "Apple", "LA"))).toBe(false);
+  });
+
+  test("similarity combined with AND", async () => {
+    const pred = await compile("company%name>=0.8 AND city=NYC", h);
+    expect(pred(r("Acme", "Acme", "NYC"))).toBe(true);
+    expect(pred(r("Acme", "Acme", "LA"))).toBe(false);
+    expect(pred(r("Acme", "Zebra", "NYC"))).toBe(false);
+  });
+
 });
 
 describe("@file", () => {

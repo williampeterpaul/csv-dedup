@@ -181,6 +181,22 @@
         "csv-dedup repeat leads.csv",
         "csv-dedup repeat leads.csv -n 3 -o tripled.csv"
       ]
+    },
+    "unique": {
+      "about": "Deduplicate rows by key columns, optionally only where an expression matches",
+      "usage": "csv-dedup unique <file.csv> -k <cols> [options]",
+      "options": [
+        { "flag": "-k, --keys <cols>", "about": "Comma-separated key column(s) for dedup (required)" },
+        { "flag": "-e, --expr <expr>", "about": "Only dedup rows matching expression; non-matching rows are kept as-is (repeatable, ANDed)" },
+        { "flag": "-c, --columns <cols>", "about": "Comma-separated columns to include in output (default: all)" },
+        { "flag": "-o, --output <path>", "about": "Output file path (default: <file>.out.csv)" },
+        { "flag": "-h, --help", "about": "Show this help" }
+      ],
+      "examples": [
+        "csv-dedup unique leads.csv -k email",
+        "csv-dedup unique leads.csv -k name -e \"name.len>=6\"",
+        "csv-dedup unique leads.csv -k domain -e \"domain!=''\" -o deduped.csv"
+      ]
     }
   }
 }
