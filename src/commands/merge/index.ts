@@ -17,6 +17,7 @@ export const merge: Cmd = {
         mode: { type: "string", short: "m", default: "outer" },
         keys: { type: "string", short: "k" },
         columns: { type: "string", short: "c" },
+        min: { type: "string" },
         output: { type: "string", short: "o" },
         help: { type: "boolean", short: "h" },
       },
@@ -51,6 +52,9 @@ export const merge: Cmd = {
       ? resolve(opts.output)
       : join(dirname(first), `${basename(first, ext)}.out${ext}`);
 
-    await run({ files, keys, cols, dest }, strategies[mode]!);
+    const min = opts.min ? parseInt(opts.min, 10) : undefined;
+    if (min !== undefined && (isNaN(min) || min < 1)) fail("--min must be a positive integer");
+
+    await run({ files, keys, cols, dest, min }, strategies[mode]!);
   },
 };

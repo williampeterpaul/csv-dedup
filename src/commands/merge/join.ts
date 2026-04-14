@@ -48,7 +48,7 @@ export async function run(args: JoinArgs, strategy: Strategy) {
     }
   }
 
-  const kept = strategy.filter(order, hits, sheets.length);
+  const kept = strategy.filter(order, hits, sheets.length, args.min);
   const rows = kept.map((k) => cols.map((c) => map.get(k)![c] ?? ""));
 
   await write(args.dest, cols, rows);

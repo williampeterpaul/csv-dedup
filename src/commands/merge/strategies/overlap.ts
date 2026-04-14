@@ -2,6 +2,6 @@ import type { Strategy } from "../../../types";
 
 export const overlap: Strategy = {
   name: "Overlap",
-  filter: (order, hits) =>
-    order.filter((k) => hits.get(k)!.size > 1),
+  filter: (order, hits, _count, min = 2) =>
+    order.filter((k) => hits.get(k)!.size >= min),
 };

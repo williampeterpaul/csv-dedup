@@ -13,9 +13,10 @@ export interface JoinArgs {
   keys: string[];
   cols: string[] | null;
   dest: string;
+  min?: number;
 }
 
 export interface Strategy {
   name: string;
-  filter(order: string[], hits: Map<string, Set<number>>, count: number): string[];
+  filter(order: string[], hits: Map<string, Set<number>>, count: number, min?: number): string[];
 }

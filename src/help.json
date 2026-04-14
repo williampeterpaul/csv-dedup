@@ -9,6 +9,7 @@
         { "flag": "-k, --keys <cols>", "about": "Comma-separated key column(s) for matching rows (required)" },
         { "flag": "-m, --mode <mode>", "about": "Join mode: outer, inner, left, exclude, unique, overlap (default: outer)" },
         { "flag": "-c, --columns <cols>", "about": "Comma-separated columns to include in output (default: all)" },
+        { "flag": "--min <n>", "about": "Minimum number of files a key must appear in (used with -m overlap, default: 2)" },
         { "flag": "-o, --output <path>", "about": "Output file path (default: <first-file>.out.csv)" },
         { "flag": "-h, --help", "about": "Show this help" }
       ],

@@ -209,6 +209,45 @@ describe("merge overlap", () => {
   });
 });
 
+describe("merge overlap --min", () => {
+  let cleanup: () => Promise<void>;
+  afterAll(async () => { if (cleanup) await cleanup(); });
+
+  test("--min 3 keeps keys in at least 3 files", async () => {
+    const t = await tmp();
+    cleanup = t.cleanup;
+    const a = await t.file("a.csv", csvA);
+    const b = await t.file("b.csv", csvB);
+    const c = await t.file("c.csv", csvC);
+    const out = join(t.dir, "out.csv");
+
+    const { code } = await run("merge", a, b, c, "-k", "domain,name", "-m", "overlap", "--min", "3", "-o", out);
+
+    expect(code).toBe(0);
+    const sheet = await read(out);
+    // Only example.com/Acme appears in all 3 files
+    expect(sheet.rows.length).toBe(1);
+    expect(sheet.rows[0]![sheet.headers.indexOf("domain")]).toBe("example.com");
+  });
+
+  test("--min 2 is the default overlap behavior", async () => {
+    const t = await tmp();
+    cleanup = t.cleanup;
+    const a = await t.file("a.csv", csvA);
+    const b = await t.file("b.csv", csvB);
+    const c = await t.file("c.csv", csvC);
+    const out = join(t.dir, "out.csv");
+
+    const { code } = await run("merge", a, b, c, "-k", "domain,name", "-m", "overlap", "--min", "2", "-o", out);
+
+    expect(code).toBe(0);
+    const sheet = await read(out);
+    // example.com/Acme is in all 3, test.org/Beta not shared, newco.io/Gamma not shared, another.io/Delta not shared
+    // Only Acme is in 2+ files
+    expect(sheet.rows.length).toBe(1);
+  });
+});
+
 describe("merge --columns", () => {
   let cleanup: () => Promise<void>;
   afterAll(async () => { if (cleanup) await cleanup(); });
