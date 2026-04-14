@@ -3,6 +3,7 @@ import type { Cmd } from "../types";
 import { usage, fail } from "../cli";
 import { one, dest, log } from "../util";
 import { read, write } from "../csv";
+import { compile } from "../expr";
 
 export const repeat: Cmd = {
   name: "repeat",
@@ -12,6 +13,7 @@ export const repeat: Cmd = {
       allowPositionals: true,
       options: {
         times: { type: "string", short: "n" },
+        expr: { type: "string", short: "e", multiple: true },
         output: { type: "string", short: "o" },
         help: { type: "boolean", short: "h" },
       },
@@ -28,13 +30,22 @@ export const repeat: Cmd = {
     const file = await one(pos, "repeat");
     const { headers, rows } = await read(file);
 
+    const preds = opts.expr
+      ? await Promise.all(opts.expr.map((e) => compile(e, headers)))
+      : null;
+
     const out = dest(file, opts.output);
     const duped: string[][] = [];
-    for (let i = 0; i < n; i++) for (const row of rows) duped.push(row);
+    for (const row of rows) {
+      const match = !preds || preds.every((p) => p(row));
+      const times = match ? n : 1;
+      for (let i = 0; i < times; i++) duped.push(row);
+    }
     await write(out, headers, duped);
 
     log(
       `Repeat ${rows.length} rows × ${n} = ${duped.length} rows`,
+      preds && `Expr:   ${opts.expr!.join(" AND ")}`,
       `Output: ${out}`,
     );
   },

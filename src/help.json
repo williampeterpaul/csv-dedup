@@ -174,12 +174,14 @@
       "usage": "csv-dedup repeat <file.csv> [-n <times>] [options]",
       "options": [
         { "flag": "-n, --times <n>", "about": "Number of copies (default: 2)" },
+        { "flag": "-e, --expr <expr>", "about": "Only repeat rows matching expression; non-matching rows are kept once (repeatable, ANDed)" },
         { "flag": "-o, --output <path>", "about": "Output file path (default: <file>.out.csv)" },
         { "flag": "-h, --help", "about": "Show this help" }
       ],
       "examples": [
         "csv-dedup repeat leads.csv",
-        "csv-dedup repeat leads.csv -n 3 -o tripled.csv"
+        "csv-dedup repeat leads.csv -n 3 -o tripled.csv",
+        "csv-dedup repeat leads.csv -n 2 -e \"country=US\""
       ]
     },
     "unique": {
